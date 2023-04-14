@@ -11,7 +11,6 @@ import java.util.*;
 public class UserRepositoryImpl implements UserRepository {
 
     private final Map<Long, User> users = new HashMap<>();
-    private final Set<String> usersByEmail = new HashSet<>();
     private long id = 0;
 
     private long makeId() {
@@ -25,19 +24,28 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public boolean checkExistEmail(String email) {
-        return usersByEmail.contains(email);
+        Optional<User> checkEmail = users.values().
+                stream().
+                filter(u -> u.getEmail().equals(email)).
+                findFirst();
+
+        return checkEmail.isPresent();
     }
 
     @Override
     public void deleteEmailFromSet(String email) {
-        usersByEmail.remove(email);
+        Optional<User> findUserEmail = users.values().
+                stream().
+                filter(user -> email.equals(user.getEmail())).
+                findFirst();
+
+        findUserEmail.ifPresent(user -> users.remove(user.getId()));
     }
 
     @Override
     public User create(User user) {
         user.setId(makeId());
         users.put(user.getId(), user);
-        usersByEmail.add(user.getEmail());
         return user;
     }
 
@@ -46,10 +54,8 @@ public class UserRepositoryImpl implements UserRepository {
         return users.get(id);
     }
 
-
     @Override
     public void delete(long id) {
-        usersByEmail.remove(users.get(id).getEmail());
         users.remove(id);
     }
 

@@ -10,6 +10,7 @@ import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,18 +61,11 @@ public class ItemServiceImpl implements ItemService {
             throw new NotFoundException("Нет подходящего предмета для пользователя с таким id");
         }
 
-        if (itemDto.getName() != null) {
-            itemToUpdate.setName(itemDto.getName());
-        }
-        if (itemDto.getDescription() != null) {
-            itemToUpdate.setDescription(itemDto.getDescription());
-        }
-        if (itemDto.getAvailable() != null) {
-            itemToUpdate.setAvailable(itemDto.getAvailable());
-        }
-        if (itemDto.getRequest() != null) {
-            itemToUpdate.setRequest(itemDto.getRequest());
-        }
+        Optional.ofNullable(itemDto.getName()).ifPresent(n -> itemToUpdate.setName(n));
+        Optional.ofNullable(itemDto.getDescription()).ifPresent(d -> itemToUpdate.setDescription(d));
+        Optional.ofNullable(itemDto.getAvailable()).ifPresent(a -> itemToUpdate.setAvailable(a));
+        Optional.ofNullable(itemDto.getRequest()).ifPresent(r -> itemToUpdate.setRequest(r));
+
         return ItemMapper.toItemDto(itemToUpdate);
     }
 

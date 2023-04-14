@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.repository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -9,6 +10,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -17,8 +19,7 @@ import java.util.stream.Collectors;
 public class ItemRepositoryImpl implements ItemRepository {
 
     private final UserRepository userRepository;
-    private final HashMap<Long, Item> items = new HashMap<>();
-    private final HashMap<Long, List<Item>> itemsByUserId = new HashMap<>();
+    private final Map<Long, Item> items = new HashMap<>();
     private long id = 0;
 
     private long makeId() {
@@ -34,16 +35,11 @@ public class ItemRepositoryImpl implements ItemRepository {
     public Item create(Item item, long userId) {
         List<Item> itemList = new ArrayList<>();
 
-        if (itemsByUserId.containsKey(userId)) {
-            itemList = itemsByUserId.get(userId);
-        }
-
         item.setId(makeId());
         item.setOwner(userRepository.read(userId));
         itemList.add(item);
 
         items.put(item.getId(), item);
-        itemsByUserId.put(userId, itemList);
         return item;
     }
 
@@ -54,19 +50,21 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     @Override
     public List<Item> getAll(long userId) {
-        return itemsByUserId.get(userId);
+        return items.values().
+                stream().
+                filter(i -> i.getOwner().getId() == userId).
+                collect(Collectors.toList());
     }
 
     @Override
     public List<Item> getSearchResults(String text) {
         List<Item> itemList = new ArrayList<>();
-        String searchText = text.toLowerCase();
 
         if (!text.isBlank()) {
             itemList = items.values().stream()
                     .filter(item -> item.isAvailable())
-                    .filter(item -> item.getName().toLowerCase().contains(searchText)
-                            || item.getDescription().toLowerCase().contains(searchText))
+                    .filter(item -> StringUtils.containsIgnoreCase(item.getName(), text)
+                            || StringUtils.containsIgnoreCase(item.getDescription(), text))
                     .collect(Collectors.toList());
         }
         return itemList;

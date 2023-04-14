@@ -20,8 +20,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
+    @Override
     public UserDto create(UserDto userDto) {
-
         if (userRepository.checkExistEmail(userDto.getEmail()))
             throw new ConflictException("Пользователь с таким email уже существует!");
 
@@ -30,27 +30,31 @@ public class UserServiceImpl implements UserService {
         return UserMapper.fromUserToUserDto(user);
     }
 
+    @Override
     public UserDto update(long id, UserDto userDto) {
         if (!userRepository.checkExistId(id)) {
             throw new NotFoundException("Пользователь с таким id не найден");
         }
-        if (userRepository.checkExistEmail(userDto.getEmail())) {
-            throw new ConflictException("Пользователь с таким email уже существует!");
-        }
         User userToUpdate = userRepository.read(id);
+
+        if (userRepository.checkExistEmail(userDto.getEmail())) {
+            if (!userToUpdate.getEmail().equals(userDto.getEmail())) {
+                throw new ConflictException("Пользователь с таким email уже существует!");
+            }
+        }
 
         if (userDto.getName() != null) {
             userToUpdate.setName(userDto.getName());
         }
 
         if (userDto.getEmail() != null) {
-            userRepository.deleteEmailFromSet(userToUpdate.getEmail());
             userToUpdate.setEmail(userDto.getEmail());
         }
 
         return UserMapper.fromUserToUserDto(userToUpdate);
     }
 
+    @Override
     public UserDto getById(long id) {
         if (!userRepository.checkExistId(id)) {
             throw new NotFoundException("Пользователь с таким id не найден");
@@ -58,6 +62,7 @@ public class UserServiceImpl implements UserService {
         return UserMapper.fromUserToUserDto(userRepository.read(id));
     }
 
+    @Override
     public void delete(long id) {
         if (!userRepository.checkExistId(id)) {
             throw new NotFoundException("Пользователь с таким id не найден");
@@ -68,6 +73,7 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(id);
     }
 
+    @Override
     public List<UserDto> getAll() {
         List<User> users = userRepository.getAll();
 
