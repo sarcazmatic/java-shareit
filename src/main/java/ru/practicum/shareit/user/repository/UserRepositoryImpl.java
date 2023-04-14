@@ -24,20 +24,20 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public boolean checkExistEmail(String email) {
-        Optional<User> checkEmail = users.values().
-                stream().
-                filter(u -> u.getEmail().equals(email)).
-                findFirst();
+        Optional<User> checkEmail = users.values()
+                .stream()
+                .filter(u -> u.getEmail().equals(email))
+                .findFirst();
 
         return checkEmail.isPresent();
     }
 
     @Override
     public void deleteEmailFromSet(String email) {
-        Optional<User> findUserEmail = users.values().
-                stream().
-                filter(user -> email.equals(user.getEmail())).
-                findFirst();
+        Optional<User> findUserEmail = users.values()
+                .stream()
+                .filter(user -> email.equals(user.getEmail()))
+                .findFirst();
 
         findUserEmail.ifPresent(user -> users.remove(user.getId()));
     }

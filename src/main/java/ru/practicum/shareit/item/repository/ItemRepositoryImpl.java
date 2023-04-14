@@ -50,10 +50,10 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     @Override
     public List<Item> getAll(long userId) {
-        return items.values().
-                stream().
-                filter(i -> i.getOwner().getId() == userId).
-                collect(Collectors.toList());
+        return items.values()
+                .stream()
+                .filter(i -> i.getOwner().getId() == userId)
+                .collect(Collectors.toList());
     }
 
     @Override
