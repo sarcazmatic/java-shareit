@@ -16,7 +16,7 @@ import java.util.List;
 public class ItemController {
 
     private final ItemService itemService;
-    public final static String USER_ID = "X-Sharer-User-Id";
+    public static final String USER_ID = "X-Sharer-User-Id";
 
     @GetMapping
     public List<ItemDtoWithBooking> getListItemByUserId(@RequestHeader(USER_ID) Long userId) {
