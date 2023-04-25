@@ -5,80 +5,73 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.NotFoundException;
-import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import javax.transaction.Transactional;
+import java.util.*;
 
-@Slf4j
+
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
+    private final UserRepository userDbStorage;
 
     @Override
-    public UserDto create(UserDto userDto) {
-        if (userRepository.checkExistEmail(userDto.getEmail()))
-            throw new ConflictException("Пользователь с таким email уже существует!");
-
-        User user = userRepository.create(UserMapper.fromUserDtoToUser(userDto));
-
-        return UserMapper.fromUserToUserDto(user);
+    public User getUserById(Long userId) {
+        return userDbStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
     }
 
     @Override
-    public UserDto update(long id, UserDto userDto) {
-        if (!userRepository.checkExistId(id)) {
-            throw new NotFoundException("Пользователь с таким id не найден");
-        }
-        User userToUpdate = userRepository.read(id);
+    public List<User> getAllUsersDto() {
+        return userDbStorage.findAll();
 
-        if (userRepository.checkExistEmail(userDto.getEmail())) {
-            if (!userToUpdate.getEmail().equals(userDto.getEmail())) {
-                throw new ConflictException("Пользователь с таким email уже существует!");
-            }
-        }
+    }
 
-        if (userDto.getName() != null) {
-            userToUpdate.setName(userDto.getName());
-        }
+    @Transactional
+    public User createUser(UserDto userDto) {
 
-        if (userDto.getEmail() != null) {
-            userToUpdate.setEmail(userDto.getEmail());
-        }
+        User user = UserMapper.fromDtoToUser(userDto);
 
-        return UserMapper.fromUserToUserDto(userToUpdate);
+        try {
+            User createdUser = userDbStorage.save(user);
+            log.info("Пользователь с почтой {} был создан", user.getEmail());
+            return createdUser;
+        } catch (RuntimeException e) {
+            log.warn("Пользователь с почтой {} уже существует", user.getEmail());
+            throw new ConflictException("Почта уже зарегестрирована");
+        }
+    }
+
+    @Transactional
+    public User updateUser(Long userId, UserDto userDto) {
+        User user = UserMapper.fromDtoToUser(userDto);
+        userDbStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
+        User updatedUser = getUserById(userId);
+
+        String updatedName = user.getName();
+        if (updatedName != null && !updatedName.isBlank())
+            updatedUser.setName(updatedName);
+
+        String updatedEmail = user.getEmail();
+
+        if (updatedEmail != null && !updatedEmail.isBlank()) {
+            updatedUser.setEmail(updatedEmail);
+        }
+        return updatedUser;
     }
 
     @Override
-    public UserDto getById(long id) {
-        if (!userRepository.checkExistId(id)) {
-            throw new NotFoundException("Пользователь с таким id не найден");
-        }
-        return UserMapper.fromUserToUserDto(userRepository.read(id));
+    public void deleteUserById(Long userId) {
+        userDbStorage.findById(userId)
+                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
+        userDbStorage.deleteById(userId);
     }
 
-    @Override
-    public void delete(long id) {
-        if (!userRepository.checkExistId(id)) {
-            throw new NotFoundException("Пользователь с таким id не найден");
-        }
-        User user = userRepository.read(id);
-
-        userRepository.deleteEmailFromSet(user.getEmail());
-        userRepository.delete(id);
-    }
-
-    @Override
-    public List<UserDto> getAll() {
-        List<User> users = userRepository.getAll();
-
-        return users.stream()
-                .map(user -> UserMapper.fromUserToUserDto(user))
-                .collect(Collectors.toList());
-    }
 }
