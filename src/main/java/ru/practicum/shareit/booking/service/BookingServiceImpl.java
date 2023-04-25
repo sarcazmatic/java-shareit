@@ -19,6 +19,7 @@ import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -41,7 +42,7 @@ public class BookingServiceImpl implements BookingService {
         if (!booking.getItem().getAvailable()) {
             throw new ValidationException("Вещь не доступна");
         }
-        if (booking.getBooker().getId() == (booking.getItem().getOwner().getId())) {
+        if (Objects.equals(booking.getBooker().getId(), booking.getItem().getOwner().getId())) {
             throw new NotFoundException("Владелец не может бронировать свою вещь");
         }
         if (booking.getStart().isAfter(booking.getEnd())) {
@@ -66,7 +67,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto updateBooking(Long bookingId, Long userId, Boolean isApproved) {
         Booking booking = getBookingById(bookingId);
 
-        if (booking.getItem().getOwner().getId() != (userId)) {
+        if (!Objects.equals(booking.getItem().getOwner().getId(), userId)) {
             throw new NotFoundException("Пользователь не является владельцем");
         }
         if (booking.getStatus().equals(BookingStatus.APPROVED) && isApproved) {
@@ -87,7 +88,7 @@ public class BookingServiceImpl implements BookingService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
 
-        if (booking.getBooker().getId() == (userId) || booking.getItem().getOwner().getId() == (userId)) {
+        if (Objects.equals(booking.getBooker().getId(), userId) || Objects.equals(booking.getItem().getOwner().getId(), userId)) {
             return BookingMapper.toBookingDto(booking);
         } else {
             throw new NotFoundException(String.format("Бронирование с ID %s не найдено", bookingId));
