@@ -9,7 +9,6 @@ import ru.practicum.shareit.user.service.UserService;
 import ru.practicum.shareit.utility.Create;
 import ru.practicum.shareit.utility.Update;
 
-import javax.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
