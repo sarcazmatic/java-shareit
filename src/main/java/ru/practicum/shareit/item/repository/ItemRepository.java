@@ -6,10 +6,11 @@ import org.springframework.data.repository.query.Param;
 import ru.practicum.shareit.item.model.Item;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
-    Collection<Item> findByOwnerIdOrderByIdAsc(Long userId);
+    List<Item> findAllByOwnerIdOrderById(Long ownerId);
 
     @Query("SELECT i FROM Item i WHERE i.available = true " +
             " AND (LOWER(i.name) LIKE LOWER(CONCAT('%',:text,'%') ) " +

@@ -1,10 +1,6 @@
 package ru.practicum.shareit.booking.dto;
 
 import lombok.*;
-import ru.practicum.shareit.booking.enums.BookingStatus;
-import ru.practicum.shareit.booking.enums.State;
-import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.utility.Create;
 
 import javax.validation.constraints.Future;
@@ -26,12 +22,7 @@ public class BookingDtoRequest {
     @NotNull(groups = Create.class)
     @Future(groups = Create.class)
     private LocalDateTime end;
-    private Item item;
+    @NotNull(groups = Create.class)
     private Long itemId;
-    private User booker;
-    private BookingStatus status;
-    private State state;
-
-
 
 }

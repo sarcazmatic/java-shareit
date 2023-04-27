@@ -53,12 +53,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStart().equals(booking.getEnd())) {
             throw new ValidationException("Дата начала совпадает с датой окончания");
         }
-        if (booking.getStart().isBefore(LocalDateTime.now())) {
-            throw new ValidationException("Дата начала бронирования уже прошла");
-        }
-        if (booking.getEnd().isBefore(LocalDateTime.now())) {
-            throw new ValidationException("Дата окончания бронирования уже прошла");
-        }
+
         booking.setStatus(BookingStatus.WAITING);
         log.info("Вещь с  ID {} забронирована", item.getId());
 
@@ -113,14 +108,11 @@ public class BookingServiceImpl implements BookingService {
     public State getStateByStr(String stateStr) {
 
         State state;
-        if (stateStr == null) {
-            state = State.ALL;
-        } else {
-            try {
-                state = State.valueOf(stateStr);
-            } catch (IllegalArgumentException e) {
-                throw new ValidationException(String.format("Unknown state: %s", stateStr));
-            }
+
+        try {
+            state = State.valueOf(stateStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException(String.format("Unknown state: %s", stateStr));
         }
 
         return state;
@@ -143,7 +135,7 @@ public class BookingServiceImpl implements BookingService {
                 bookings = bookingRepository.findByBooker_IdAndStatus(userId, BookingStatus.WAITING);
                 break;
             case CURRENT:
-                bookings = bookingRepository.findBookingByBookerIdAndStartIsBeforeAndEndIsAfter(userId, now,now);
+                bookings = bookingRepository.findBookingByBookerIdAndStartIsBeforeAndEndIsAfter(userId, now, now);
                 break;
             case REJECTED:
                 bookings = bookingRepository.findByBooker_IdAndStatus(userId, BookingStatus.REJECTED);
@@ -151,6 +143,8 @@ public class BookingServiceImpl implements BookingService {
             case FUTURE:
                 bookings = bookingRepository.findFuture(userId, now);
                 break;
+            default:
+                throw new NotFoundException("Состояние резервирования не распознано");
         }
 
         return BookingMapper.toBookingDtoResponseList(bookings);
@@ -181,6 +175,8 @@ public class BookingServiceImpl implements BookingService {
             case REJECTED:
                 bookings = bookingRepository.findAllByItem_Owner_IdAndStatus(userId, BookingStatus.REJECTED);
                 break;
+            default:
+                throw new NotFoundException("Состояние резервирования не распознано");
         }
 
         return BookingMapper.toBookingDtoResponseList(bookings);

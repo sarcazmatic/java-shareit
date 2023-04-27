@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ItemMapper {
 
-    public static ItemDto toItemDto(Item item) {
+    public ItemDto toItemDto(Item item) {
 
         log.info("Собираем вещь в ДТО");
         return ItemDto.builder()
@@ -27,7 +27,7 @@ public class ItemMapper {
                 .available(item.getAvailable()).build();
     }
 
-    public static Item toItem(ItemDto itemDto, User user) {
+    public Item toItem(ItemDto itemDto, User user) {
 
         log.info("Собираем вещь из ДТО");
         return Item.builder()
@@ -39,7 +39,7 @@ public class ItemMapper {
                 .build();
     }
 
-    public static Item toItemTemp(ItemDto itemDto) {
+    public Item toItemTemp(ItemDto itemDto) {
 
         log.info("Собираем вещь из ДТО");
         return Item.builder()
@@ -50,7 +50,7 @@ public class ItemMapper {
                 .build();
     }
 
-    public static ItemDtoWithBooking toItemDtoWithBooking(List<Comment> commentList, Booking lastBooking,
+    public ItemDtoWithBooking toItemDtoWithBooking(List<Comment> commentList, Booking lastBooking,
                                                           Booking nextBooking, Item item) {
 
         List<ItemDtoWithBooking.Comment> comments = commentList.stream()

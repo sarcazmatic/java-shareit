@@ -4,9 +4,6 @@ import lombok.*;
 import ru.practicum.shareit.booking.enums.BookingStatus;
 import ru.practicum.shareit.booking.enums.State;
 
-import javax.validation.constraints.Future;
-import javax.validation.constraints.FutureOrPresent;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 
@@ -17,11 +14,7 @@ import java.time.LocalDateTime;
 public class BookingDtoResponse {
 
     private Long id;
-    @NotNull
-    @FutureOrPresent
     private LocalDateTime start;
-    @NotNull
-    @Future
     private LocalDateTime end;
     private Item item;
     private Long itemId;

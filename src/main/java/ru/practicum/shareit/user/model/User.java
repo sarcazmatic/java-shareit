@@ -1,11 +1,7 @@
 package ru.practicum.shareit.user.model;
 
-/**
- * TODO Sprint add-controllers.
- */
 import lombok.*;
 import javax.persistence.*;
-
 
 @Data
 @NoArgsConstructor

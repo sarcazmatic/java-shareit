@@ -3,7 +3,8 @@ package ru.practicum.shareit.item.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.comment.dto.CommentDto;
+import ru.practicum.shareit.comment.dto.CommentDtoRequest;
+import ru.practicum.shareit.comment.dto.CommentDtoResponse;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithBooking;
 import ru.practicum.shareit.item.service.ItemService;
@@ -38,9 +39,9 @@ public class ItemController {
     }
 
     @PostMapping("/{itemId}/comment")
-    public CommentDto addComment(@RequestHeader(USER_ID) Long userId,
-                                 @PathVariable Long itemId, @Validated({Create.class}) @RequestBody CommentDto commentDto) {
-        return itemService.addComment(itemId, userId, commentDto);
+    public CommentDtoResponse addComment(@RequestHeader(USER_ID) Long userId,
+                                         @PathVariable Long itemId, @Validated({Create.class}) @RequestBody CommentDtoRequest commentDtoRequest) {
+        return itemService.addComment(itemId, userId, commentDtoRequest);
     }
 
     @PatchMapping("/{itemId}")

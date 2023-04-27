@@ -15,9 +15,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BookingMapper {
 
-    public static BookingDtoResponse toBookingDtoResponse(Booking booking) {
-        BookingDtoResponse.Item item = new BookingDtoResponse.Item(
-        );
+    public BookingDtoResponse toBookingDtoResponse(Booking booking) {
+        BookingDtoResponse.Item item = new BookingDtoResponse.Item();
         BookingDtoResponse.User bookerDto = new BookingDtoResponse.User();
 
         if (booking.getItem() != null) {
@@ -41,7 +40,7 @@ public class BookingMapper {
                 .build();
     }
 
-    public static List<BookingDtoResponse> toBookingDtoResponseList(List<Booking> booking) {
+    public List<BookingDtoResponse> toBookingDtoResponseList(List<Booking> booking) {
 
         return booking
                 .stream()
@@ -49,7 +48,7 @@ public class BookingMapper {
                 .collect(Collectors.toList());
     }
 
-    public static Booking toBooking(User booker, Item item, BookingDtoRequest bookingDtoRequest) {
+    public Booking toBooking(User booker, Item item, BookingDtoRequest bookingDtoRequest) {
         Booking booking = new Booking();
         booking.setId(bookingDtoRequest.getId());
         booking.setStart(bookingDtoRequest.getStart());

@@ -1,6 +1,5 @@
 package ru.practicum.shareit.booking.controller;
 
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +8,6 @@ import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.utility.Create;
 
-import javax.websocket.server.PathParam;
 import java.util.List;
 
 import static ru.practicum.shareit.item.controller.ItemController.USER_ID;
@@ -30,7 +28,7 @@ public class BookingController {
 
     @PatchMapping("/{bookingId}")
     public BookingDtoResponse updateBooking(@RequestHeader(USER_ID) Long userId,
-                                           @PathVariable Long bookingId, @PathParam("approved") @NonNull Boolean approved) {
+                                           @PathVariable Long bookingId, @RequestParam("approved") Boolean approved) {
         return bookingService.updateBooking(bookingId, userId, approved);
     }
 
@@ -41,13 +39,15 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDtoResponse> getAllBookingForBooker(@RequestHeader(USER_ID) Long userId,
-                                                          @PathParam("state") String state) {
+                                                           @RequestParam(name = "state", defaultValue = "ALL") String state) {
+
         return bookingService.getAllBookingByUserId(userId, state);
     }
 
     @GetMapping("/owner")
     public List<BookingDtoResponse> getAllBookingForOwner(@RequestHeader(USER_ID) Long userId,
-                                                         @PathParam("state") String state) {
+                                                          @RequestParam(name = "state", defaultValue = "ALL") String state) {
+
         return bookingService.getAllBookingByOwnerId(userId, state);
     }
 
