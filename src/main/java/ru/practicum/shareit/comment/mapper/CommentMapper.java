@@ -21,11 +21,9 @@ public class CommentMapper {
 
     public Comment toComment(CommentDtoRequest commentDtoRequest, Item item, User user) {
         return Comment.builder()
-                .id(commentDtoRequest.getId())
                 .text(commentDtoRequest.getText())
                 .item(item)
                 .user(user)
-                .created(commentDtoRequest.getCreated())
                 .build();
     }
 }

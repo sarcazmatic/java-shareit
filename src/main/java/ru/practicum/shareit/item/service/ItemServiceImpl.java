@@ -65,17 +65,17 @@ public class ItemServiceImpl implements ItemService {
         List<Comment> commentList = getCommentsByItemId(item);
 
         if (userId.equals(item.getOwner().getId())) {
-            LocalDateTime localDateTime = LocalDateTime.now();
+            LocalDateTime ldtNow = LocalDateTime.now();
             Booking lastBooking;
             Booking nextBooking;
-            Optional<Booking> lastBookingOpt = bookingDbStorage.findFirstByItem_IdAndEndBeforeAndStatusOrderByEndDesc(itemId, localDateTime, BookingStatus.APPROVED);
+            Optional<Booking> lastBookingOpt = bookingDbStorage.findFirstByItem_IdAndEndBeforeAndStatusOrderByEndDesc(itemId, ldtNow, BookingStatus.APPROVED);
             if (lastBookingOpt.isEmpty()) {
-                lastBooking = bookingDbStorage.findFirstByItem_IdAndEndAfterAndStatusOrderByEndDesc(itemId, localDateTime, BookingStatus.APPROVED);
+                lastBooking = bookingDbStorage.findFirstByItem_IdAndEndAfterAndStatusOrderByEndDesc(itemId, ldtNow, BookingStatus.APPROVED);
             } else {
                 lastBooking = lastBookingOpt.get();
             }
             Optional<Booking> nextBookingOpt = bookingDbStorage
-                    .findTopByItem_IdAndStartAfterAndStatusOrderByStartAsc(itemId, localDateTime, BookingStatus.APPROVED);
+                    .findTopByItem_IdAndStartAfterAndStatusOrderByStartAsc(itemId, ldtNow, BookingStatus.APPROVED);
             if (nextBookingOpt.isEmpty()) {
                 nextBooking = null;
             } else {
@@ -136,7 +136,7 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     @Override
     public CommentDtoResponse addComment(Long itemId, Long userId, CommentDtoRequest commentDtoRequest) {
-
+        LocalDateTime ldtNow = LocalDateTime.now();
         User user = userDbStorage.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
         Item item = itemDbStorage.findById(itemId)
@@ -144,12 +144,12 @@ public class ItemServiceImpl implements ItemService {
         Comment comment = CommentMapper.toComment(commentDtoRequest, item, user);
 
         List<Booking> booking = bookingDbStorage.findByBookerIdStatePast(comment.getUser().getId(),
-                LocalDateTime.now());
+                ldtNow);
         if (booking.isEmpty()) {
             throw new ValidationException("Не найдено брони у этого пользователя");
         }
 
-        comment.setCreated(LocalDateTime.now());
+        comment.setCreated(ldtNow);
         commentDbStorage.save(comment);
         log.info("Создан комментарий с ID {}", comment.getId());
 
@@ -161,13 +161,13 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private static ItemDtoWithBooking addBookingsAndComments(Item item, List<Booking> bookings, List<Comment> comments) {
+        LocalDateTime ldtNow = LocalDateTime.now();
         Booking lastBooking = bookings.stream()
-                .filter(b -> !b.getStart().isAfter(LocalDateTime.now()))
-                .filter(b -> !b.getEnd().isAfter(LocalDateTime.now()))
+                .filter(b -> !b.getStart().isAfter(ldtNow))
                 .findFirst()
                 .orElse(null);
         Booking nextBooking = bookings.stream()
-                .filter(b -> !b.getStart().isBefore(LocalDateTime.now()))
+                .filter(b -> !b.getStart().isBefore(ldtNow))
                 .reduce((first, second) -> second).orElse(null);
         List<Comment> itemComments = comments.stream()
                 .filter(comment -> comment.getItem().equals(item))

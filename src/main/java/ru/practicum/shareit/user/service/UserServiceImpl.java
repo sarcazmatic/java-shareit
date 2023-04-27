@@ -34,18 +34,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public User createUser(UserDto userDto) {
+    public User createUser(UserDto userDto) throws ConflictException {
 
         User user = UserMapper.fromDtoToUser(userDto);
 
-        try {
             User createdUser = userDbStorage.save(user);
             log.info("Пользователь с почтой {} был создан", user.getEmail());
             return createdUser;
-        } catch (RuntimeException e) {
-            log.warn("Пользователь с почтой {} уже существует", user.getEmail());
-            throw new ConflictException("Почта уже зарегестрирована");
-        }
+
     }
 
     @Transactional
