@@ -1,7 +1,9 @@
 package ru.practicum.shareit.booking.mapper;
 
+import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
-import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingDtoRequest;
+import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
@@ -9,13 +11,14 @@ import ru.practicum.shareit.user.model.User;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@UtilityClass
 @Slf4j
 public class BookingMapper {
 
-    public static BookingDto toBookingDto(Booking booking) {
-        BookingDto.Item item = new BookingDto.Item(
+    public static BookingDtoResponse toBookingDtoResponse(Booking booking) {
+        BookingDtoResponse.Item item = new BookingDtoResponse.Item(
         );
-        BookingDto.User bookerDto = new BookingDto.User();
+        BookingDtoResponse.User bookerDto = new BookingDtoResponse.User();
 
         if (booking.getItem() != null) {
             item.setId(booking.getItem().getId());
@@ -27,7 +30,7 @@ public class BookingMapper {
 
         }
         log.info("Собираем бронирование");
-        return BookingDto.builder()
+        return BookingDtoResponse.builder()
                 .id(booking.getId())
                 .itemId(booking.getItem().getId())
                 .start(booking.getStart())
@@ -38,19 +41,19 @@ public class BookingMapper {
                 .build();
     }
 
-    public static List<BookingDto> toBookingDtoList(List<Booking> booking) {
+    public static List<BookingDtoResponse> toBookingDtoResponseList(List<Booking> booking) {
 
         return booking
                 .stream()
-                .map(BookingMapper::toBookingDto)
+                .map(BookingMapper::toBookingDtoResponse)
                 .collect(Collectors.toList());
     }
 
-    public static Booking toBooking(User booker, Item item, BookingDto bookingDto) {
+    public static Booking toBooking(User booker, Item item, BookingDtoRequest bookingDtoRequest) {
         Booking booking = new Booking();
-        booking.setId(bookingDto.getId());
-        booking.setStart(bookingDto.getStart());
-        booking.setEnd(bookingDto.getEnd());
+        booking.setId(bookingDtoRequest.getId());
+        booking.setStart(bookingDtoRequest.getStart());
+        booking.setEnd(bookingDtoRequest.getEnd());
         booking.setBooker(booker);
         booking.setItem(item);
         return booking;

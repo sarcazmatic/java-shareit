@@ -51,9 +51,13 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User updateUser(Long userId, UserDto userDto) {
         User user = UserMapper.fromDtoToUser(userDto);
-        userDbStorage.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
-        User updatedUser = getUserById(userId);
+        Optional<User> updatedUserOpt = Optional.of(getUserById(userId));
+        User updatedUser;
+        if (updatedUserOpt.isPresent()) {
+            updatedUser = updatedUserOpt.get();
+        } else {
+            throw new NotFoundException(String.format("Пользователь с ID %s не найден", userId));
+        }
 
         String updatedName = user.getName();
         if (updatedName != null && !updatedName.isBlank())
@@ -62,6 +66,7 @@ public class UserServiceImpl implements UserService {
         String updatedEmail = user.getEmail();
 
         if (updatedEmail != null && !updatedEmail.isBlank()) {
+
             updatedUser.setEmail(updatedEmail);
         }
         return updatedUser;

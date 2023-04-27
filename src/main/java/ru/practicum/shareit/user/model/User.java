@@ -4,10 +4,8 @@ package ru.practicum.shareit.user.model;
  * TODO Sprint add-controllers.
  */
 import lombok.*;
-
 import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
+
 
 @Data
 @NoArgsConstructor
@@ -21,8 +19,6 @@ public class User {
     private Long id;
     @Column(nullable = false)
     private String name;
-    @NotBlank
-    @Email
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 }
