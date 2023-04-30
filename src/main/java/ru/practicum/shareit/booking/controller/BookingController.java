@@ -53,7 +53,7 @@ public class BookingController {
     public List<BookingDtoResponse> getAllBookingForOwner(@RequestHeader(USER_ID) Long userId,
                                                           @RequestParam(name = "state", defaultValue = "ALL") String state,
                                                           @RequestParam(required = false) Integer from,
-                                                          @RequestParam(required = false) Integer size){
+                                                          @RequestParam(required = false) Integer size) {
         Pageable pageable = PageableMaker.makePageable(from, size, Sort.by(Sort.Direction.DESC, "id"));
         return bookingService.getAllBookingByOwnerId(userId, state, pageable);
     }

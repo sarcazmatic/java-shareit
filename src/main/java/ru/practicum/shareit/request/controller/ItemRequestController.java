@@ -36,8 +36,8 @@ public class ItemRequestController {
 
     @GetMapping("/all")
     public List<ItemRequestDtoResponse> getAllRequestsForUser(@RequestHeader(USER_ID) Long userId,
-                                                             @RequestParam(required = false, defaultValue = "0") Integer from,
-                                                             @RequestParam(required = false, defaultValue = "10") Integer size) {
+                                                              @RequestParam(required = false, defaultValue = "0") Integer from,
+                                                              @RequestParam(required = false, defaultValue = "10") Integer size) {
         return itemRequestService.findAll(userId, from, size);
     }
 }

@@ -38,8 +38,14 @@ class ItemRequestControllerTest {
     private final User user = new User(1L, "User1", "user1@mail.ru");
 
     private final ItemRequest itemRequest = new ItemRequest(1L, "text", user, LocalDateTime.now());
-    private final Item item = Item.builder().
-            id(1L).name("item1").owner(user).description("description").available(true).request(itemRequest).build();
+    private final Item item = Item.builder()
+            .id(1L)
+            .name("item1")
+            .owner(user)
+            .description("description")
+            .available(true)
+            .request(itemRequest)
+            .build();
 
     @Test
     void createNewRequestTest() throws Exception {

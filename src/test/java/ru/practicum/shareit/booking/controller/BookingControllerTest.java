@@ -48,8 +48,12 @@ class BookingControllerTest {
             item, user2, BookingStatus.WAITING, State.CURRENT);
 
     private final BookingDtoResponse bookingDto = BookingMapper.toBookingDtoResponse(booking);
-    private final BookingDtoRequest bookingDtoRequest = BookingDtoRequest.builder().
-            id(bookingDto.getId()).start(bookingDto.getStart()).end(bookingDto.getEnd()).itemId(bookingDto.getItemId()).build();
+    private final BookingDtoRequest bookingDtoRequest = BookingDtoRequest.builder()
+            .id(bookingDto.getId())
+            .start(bookingDto.getStart())
+            .end(bookingDto.getEnd())
+            .itemId(bookingDto.getItemId())
+            .build();
 
 
     @Test

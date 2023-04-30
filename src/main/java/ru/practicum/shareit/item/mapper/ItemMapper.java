@@ -30,7 +30,7 @@ public class ItemMapper {
                 .available(item.getAvailable()).build();
     }
 
-    public ItemDtoRequest toItemDtoReq (Item item) {
+    public ItemDtoRequest toItemDtoReq(Item item) {
         Long requestId = (item.getRequest() == null ? null : item.getRequest().getId());
 
         log.info("Собираем вещь в ДТО");
@@ -58,7 +58,6 @@ public class ItemMapper {
     }
 
     public Item toItemTemp(ItemDtoRequest itemDtoRequest) {
-        Long request = (itemDtoRequest.getRequestId() == null ? null : itemDtoRequest.getRequestId());
         Item item = new Item();
         if (itemDtoRequest.getRequestId() != null) {
             ItemRequest itemRequest = new ItemRequest();
