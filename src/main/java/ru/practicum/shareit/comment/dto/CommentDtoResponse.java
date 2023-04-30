@@ -1,9 +1,6 @@
 package ru.practicum.shareit.comment.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -11,6 +8,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class CommentDtoResponse {
 
     private Long id;
