@@ -204,13 +204,10 @@ class ItemServiceTest {
                 .name("UpdatedName")
                 .description("UpdatedDescription")
                 .build();
-        Mockito.when(itemRepository.findById(itemId))
-                .thenReturn(Optional.of(item));
-
 
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> itemService.updateItem(userId, itemId, itemWithUpdates));
-        assertThat(exception.getMessage(), equalTo("Пользователь с ID 10 не найден"));
+        assertThat(exception.getMessage(), equalTo("Предмет с ID 1 не найден"));
     }
 
     @Test
