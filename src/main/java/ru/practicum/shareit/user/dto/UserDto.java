@@ -6,15 +6,15 @@ import ru.practicum.shareit.utility.Create;
 import ru.practicum.shareit.utility.Update;
 
 import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 
 @Data
 @Builder
 public class UserDto {
     private long id;
-    @NotNull(groups = Create.class)
+    @NotBlank(groups = Create.class)
     private String name;
-    @NotNull(groups = Create.class)
-    @Email(groups = {Update.class, Create.class})
+    @NotBlank(groups = Create.class)
+    @Email(groups = {Create.class, Update.class})
     private String email;
 }
