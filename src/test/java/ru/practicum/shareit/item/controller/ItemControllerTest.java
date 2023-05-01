@@ -16,8 +16,6 @@ import ru.practicum.shareit.item.dto.ItemDtoRequest;
 import ru.practicum.shareit.item.dto.ItemDtoResponse;
 import ru.practicum.shareit.item.dto.ItemDtoWithBooking;
 import ru.practicum.shareit.item.service.ItemService;
-import ru.practicum.shareit.user.dto.UserDto;
-import ru.practicum.shareit.user.mapper.UserMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -38,17 +36,11 @@ class ItemControllerTest {
     @MockBean
     private ItemService itemService;
     public static final String SHARER_USER_ID = "X-Sharer-User-Id";
-    private UserDto userDto;
     private ItemDtoResponse itemDto;
     private CommentDtoResponse commentDto;
 
     @BeforeEach
     void setUp() {
-        userDto = UserDto.builder()
-                .id(1L)
-                .name("userName")
-                .email("name@mail.com")
-                .build();
         itemDto = ItemDtoResponse.builder()
                 .id(1L)
                 .name("item name")

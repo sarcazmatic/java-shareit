@@ -16,6 +16,7 @@ class PageableMakerTest {
         PageableMaker pageableMaker = new PageableMaker();
         assertThat(pageableMaker, notNullValue());
     }
+
     @Test
     void makePageable_whenInvoked_thenReturnPageable() {
         Integer from = 0;
