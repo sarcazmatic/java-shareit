@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.service;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
 import ru.practicum.shareit.utility.PageableMaker;
 
@@ -26,6 +28,7 @@ import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,6 +39,7 @@ class BookingServiceTest {
     private final BookingRepository bookingRepository;
 
     private final BookingService bookingService;
+    private final UserRepository userRepository;
 
     private final User user = new User(1L, "user1", "user1@mail.ru");
     private final User user2 = new User(2L, "user2", "user2@mail.ru");
@@ -56,7 +60,8 @@ class BookingServiceTest {
     public BookingServiceTest(BookingRepository bookingRepository,
                               BookingService bookingService,
                               ItemService itemService,
-                              UserService userService) {
+                              UserService userService,
+                              UserRepository userRepository) {
         this.bookingRepository = bookingRepository;
         this.bookingService = bookingService;
         userService.createUser(UserMapper.userToDto(user));
@@ -65,6 +70,7 @@ class BookingServiceTest {
         bookingRepository.save(booking);
         bookingRepository.save(bookingApproved);
         bookingRepository.save(bookingRejected);
+        this.userRepository = userRepository;
     }
 
     @Test

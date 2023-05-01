@@ -20,8 +20,6 @@ public class ItemDtoWithBooking {
     private List<Comment> comments;
 
     @Data
-    @Builder
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class Booking {
         private Long id;
@@ -29,8 +27,6 @@ public class ItemDtoWithBooking {
     }
 
     @Data
-    @Builder
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class Comment {
         private Long id;

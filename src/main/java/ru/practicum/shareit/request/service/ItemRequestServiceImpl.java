@@ -3,6 +3,7 @@ package ru.practicum.shareit.request.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.NotFoundException;
@@ -16,6 +17,7 @@ import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.utility.PageableMaker;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -78,19 +80,14 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public List<ItemRequestDtoResponse> findAll(Long userId, int from, int size) {
-        if (from >= 0 && size > 0) {
+        Pageable pageable = PageableMaker.makePageable(from, size, Sort.by("created").ascending());
 
-            Map<Long, List<Item>> requestItemMap = extractItemsToRequests();
-            return itemRequestRepository.findByRequester_IdNot(userId,
-                            PageRequest.of(from / size, size,
-                                    Sort.by("created").descending()))
-                    .stream()
-                    .map(itemRequest
-                            -> ItemRequestMapper.toItemRequestDtoResponse(itemRequest, requestItemMap.get(itemRequest.getId())))
-                    .collect(Collectors.toList());
-        } else {
-            throw new ValidationException("size и from должны быть больше 0!");
-        }
+        Map<Long, List<Item>> requestItemMap = extractItemsToRequests();
+        return itemRequestRepository.findByRequester_IdNot(userId, pageable)
+                .stream()
+                .map(itemRequest
+                        -> ItemRequestMapper.toItemRequestDtoResponse(itemRequest, requestItemMap.get(itemRequest.getId())))
+                .collect(Collectors.toList());
     }
 
     private Map<Long, List<Item>> extractItemsToRequests() {
@@ -111,9 +108,9 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     private void validate(ItemRequest itemRequest) {
-
         if (itemRequest.getDescription() == null || itemRequest.getDescription().isBlank()) {
-            throw new ValidationException("Description has to be not empty");
+            throw new ValidationException("Описание не должно быть пустым");
         }
     }
+
 }

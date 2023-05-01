@@ -108,7 +108,7 @@ class ErrorHandlerTest {
     @Test
     void direct_NotFoundException_ErrorResponse() {
         errorResponse = new ErrorResponse("Тест");
-        NotFoundException notFoundException = new NotFoundException("Тест");
+        final NotFoundException notFoundException = new NotFoundException("Тест");
         ErrorResponse errorResponse1 = new ErrorResponse(notFoundException.getMessage());
         assertThat(errorResponse.getError(), equalTo("Тест"));
         assertThat(errorResponse1.getError(), equalTo("Тест"));

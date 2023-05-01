@@ -45,14 +45,14 @@ public class BookingServiceImpl implements BookingService {
         if (!booking.getItem().getAvailable()) {
             throw new ValidationException("Вещь не доступна");
         }
-        if (Objects.equals(booking.getBooker().getId(), booking.getItem().getOwner().getId())) {
-            throw new NotFoundException("Владелец не может бронировать свою вещь");
-        }
         if (booking.getStart().isAfter(booking.getEnd())) {
             throw new ValidationException("Дата начала бронирования позже окончания");
         }
         if (booking.getStart().equals(booking.getEnd())) {
             throw new ValidationException("Дата начала совпадает с датой окончания");
+        }
+        if (Objects.equals(booking.getBooker().getId(), booking.getItem().getOwner().getId())) {
+            throw new NotFoundException("Владелец не может бронировать свою вещь");
         }
 
         booking.setStatus(BookingStatus.WAITING);
@@ -144,8 +144,7 @@ public class BookingServiceImpl implements BookingService {
             case FUTURE:
                 bookings = bookingRepository.findFuturePageable(userId, now, pageable);
                 break;
-            default:
-                throw new NotFoundException("Состояние резервирования не распознано");
+
         }
 
         return BookingMapper.toBookingDtoResponseList(bookings);

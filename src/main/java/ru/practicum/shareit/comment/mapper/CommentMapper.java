@@ -7,6 +7,8 @@ import ru.practicum.shareit.comment.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
+import java.time.LocalDateTime;
+
 @UtilityClass
 public class CommentMapper {
 
@@ -19,9 +21,10 @@ public class CommentMapper {
         );
     }
 
-    public Comment toComment(CommentDtoRequest commentDtoRequest, Item item, User user) {
+    public Comment toComment(CommentDtoRequest commentDtoRequest, Item item, User user, LocalDateTime ldt) {
         return Comment.builder()
                 .text(commentDtoRequest.getText())
+                .created(ldt)
                 .item(item)
                 .user(user)
                 .build();

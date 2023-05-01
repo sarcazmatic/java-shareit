@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.booking.dto.BookingDtoRequest;
 import ru.practicum.shareit.booking.enums.BookingStatus;
 import ru.practicum.shareit.booking.model.Booking;
@@ -12,6 +14,7 @@ import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.comment.dto.CommentDtoRequest;
 import ru.practicum.shareit.comment.dto.CommentDtoResponse;
 import ru.practicum.shareit.comment.mapper.CommentMapper;
+import ru.practicum.shareit.comment.repository.CommentRepository;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.dto.*;
@@ -21,11 +24,14 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
+import ru.practicum.shareit.request.service.ItemRequestService;
+import ru.practicum.shareit.request.service.ItemRequestServiceImpl;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.utility.PageableMaker;
 
 import javax.transaction.Transactional;
 import java.time.LocalDateTime;
@@ -56,7 +62,8 @@ class ItemServiceTest {
 
     @Mock
     BookingRepository bookingRepository;
-
+    @Mock
+    ItemRequestService itemRequestService;
     static User user;
     static UserDto userDto;
     static Item item;
@@ -64,19 +71,16 @@ class ItemServiceTest {
     static ItemRequest itemRequest;
     static Comment comment;
     static CommentDtoResponse commentDto;
-    static BookingDtoRequest bookingDtoRequest;
     static Booking booking1;
     static Booking booking2;
 
     static User user100 = new User(100L, "user100", "user100@mail.ru");
-    static UserDto userDto100 = UserMapper.userToDto(user100);
 
     static Item item100 = new Item(100L, "item100", "item100description", true, user100, null);
-    static ItemDtoResponse itemDto100Response = ItemMapper.toItemDto(item100);
     static ItemDtoRequest itemDto100Request = ItemMapper.toItemDtoReq(item100);
 
     static Comment comment100 = new Comment(100L, "comment100", item100, user100, LocalDateTime.now());
-    static CommentDtoResponse commentDto100Response = CommentMapper.toCommentDto(comment100);
+
 
     @Autowired
     public ItemServiceTest(UserRepository userRepository, UserService userService, ItemService itemService, ItemRepository itemRepository, ItemRequestRepository itemRequestRepository, BookingRepository bookingRepository) {
@@ -185,6 +189,19 @@ class ItemServiceTest {
     }
 
     @Test
+    void getSearchResults_whenInvoked_thenReturnListWithOneItem() {
+        String text = "item";
+        int from = 0;
+        int size = 5;
+        Pageable pageable = PageableMaker.makePageable(from, size, Sort.by(Sort.Direction.ASC, "id"));
+        Mockito.when(itemRepository.searchItem(Mockito.anyString(), Mockito.any(Pageable.class)))
+                .thenReturn(Collections.singletonList(item));
+
+        List<ItemDtoResponse> searchResults = itemService.searchItem(text, pageable);
+        assertThat(searchResults, hasSize(1));
+    }
+
+    @Test
     void update_whenItemNotFound_thenNotFoundExceptionThrown() {
         long userId = 1L;
         long itemId = 1000L;
@@ -270,7 +287,5 @@ class ItemServiceTest {
                 () -> itemService.addComment(itemId, userId, cdr));
         assertThat(exception.getMessage(), equalTo("Не найдено брони у этого пользователя"));
     }
-
-
 
 }

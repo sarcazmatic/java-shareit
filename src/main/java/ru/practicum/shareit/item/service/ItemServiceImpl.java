@@ -160,12 +160,19 @@ public class ItemServiceImpl implements ItemService {
         Optional<User> user = userRepository.findById(userId);
         Optional<Item> item = itemRepository.findById(itemId);
 
-        if (!user.isPresent())
-                throw new NotFoundException(String.format("Пользователь с ID %s не найден", userId));
-        if (!item.isPresent())
+        if (user.isEmpty())
+            throw new NotFoundException(String.format("Пользователь с ID %s не найден", userId));
+        if (item.isEmpty())
             throw new NotFoundException(String.format("Предмет с ID %s не найден", itemId));
 
-        Comment comment = CommentMapper.toComment(commentDtoRequest, item.get(), user.get());
+        Optional<Comment> commentOpt = Optional.of(CommentMapper.toComment(commentDtoRequest, item.get(), user.get(), ldtNow));
+        Comment comment;
+
+        if (commentOpt.get().getText().isEmpty()) {
+            throw new NotFoundException("Комментарий не найден");
+        } else {
+            comment = commentOpt.get();
+        }
 
         List<Booking> booking = bookingDbStorage.findByBookerIdStatePast(comment.getUser().getId(),
                 ldtNow);

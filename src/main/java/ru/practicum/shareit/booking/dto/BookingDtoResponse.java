@@ -25,7 +25,6 @@ public class BookingDtoResponse {
 
     @Getter
     @Setter
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class Item {
         private Long id;
@@ -34,7 +33,6 @@ public class BookingDtoResponse {
 
     @Getter
     @Setter
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class User {
         private Long id;
