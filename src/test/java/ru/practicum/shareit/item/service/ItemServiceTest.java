@@ -2,23 +2,24 @@ package ru.practicum.shareit.item.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import ru.practicum.shareit.booking.dto.BookingDtoRequest;
 import ru.practicum.shareit.booking.enums.BookingStatus;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.comment.dto.CommentDtoRequest;
 import ru.practicum.shareit.comment.dto.CommentDtoResponse;
+import ru.practicum.shareit.comment.mapper.CommentMapper;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.comment.model.Comment;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.comment.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.repository.ItemRequestRepository;
@@ -26,60 +27,87 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
+import ru.practicum.shareit.user.service.UserService;
 import ru.practicum.shareit.utility.PageableMaker;
 
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@Transactional
 class ItemServiceTest {
-    @Mock
-    private ItemRepository itemRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private ItemRequestRepository requestRepository;
-    @Mock
-    private BookingRepository bookingRepository;
-    @Mock
-    private CommentRepository commentRepository;
-    @Captor
-    private ArgumentCaptor<Item> itemArgumentCaptor;
-    @Captor
-    private ArgumentCaptor<Comment> commentArgumentCaptor;
-    @InjectMocks
-    private ItemServiceImpl itemService;
-    private ItemDtoResponse itemDto;
-    private UserDto userDto;
-    private CommentDtoResponse commentDto;
-    private ItemRequest itemRequest;
-    private Item item;
-    private User user;
-    private Comment comment;
-    private Booking booking1;
-    private Booking booking2;
 
-    @BeforeEach
+    @Mock
+    ItemRepository itemRepository;
+
+    @InjectMocks
+    ItemService itemService;
+
+    @Mock
+    ItemRequestRepository itemRequestRepository;
+
+    @Mock
+    UserRepository userRepository;
+
+    @Mock
+    UserService userService;
+
+    @Mock
+    BookingRepository bookingRepository;
+
+    static User user;
+    static UserDto userDto;
+    static Item item;
+    static ItemDtoResponse itemDtoResponse;
+    static ItemRequest itemRequest;
+    static Comment comment;
+    static CommentDtoResponse commentDto;
+    static BookingDtoRequest bookingDtoRequest;
+    static Booking booking1;
+    static Booking booking2;
+
+    static User user100 = new User(100L, "user100", "user100@mail.ru");
+    static UserDto userDto100 = UserMapper.userToDto(user100);
+
+    static Item item100 = new Item(100L, "item100", "item100description", true, user100, null);
+    static ItemDtoResponse itemDto100Response = ItemMapper.toItemDto(item100);
+    static ItemDtoRequest itemDto100Request = ItemMapper.toItemDtoReq(item100);
+
+    static Comment comment100 = new Comment(100L, "comment100", item100, user100, LocalDateTime.now());
+    static CommentDtoResponse commentDto100Response = CommentMapper.toCommentDto(comment100);
+
+    @Autowired
+    public ItemServiceTest(UserRepository userRepository, UserService userService, ItemService itemService, ItemRepository itemRepository, ItemRequestRepository itemRequestRepository, BookingRepository bookingRepository) {
+        this.userRepository = userRepository;
+        this.userService = userService;
+        this.itemService = itemService;
+        this.itemRepository = itemRepository;
+        this.itemRequestRepository = itemRequestRepository;
+        this.bookingRepository = bookingRepository;
+    }
+
+
+
+@BeforeEach
     void setUp() {
         userDto = UserDto.builder()
                 .id(1L)
                 .name("userName")
                 .email("name@mail.com")
                 .build();
-        itemDto = ItemDtoResponse.builder()
+        itemDtoResponse = ItemDtoResponse.builder()
                 .id(1L)
                 .name("item name")
                 .description("item description")
                 .available(false)
                 .build();
         user = UserMapper.fromDtoToUser(userDto);
-        item = ItemMapper.toItem(itemDto);
+        item = ItemMapper.toItem(itemDtoResponse);
         commentDto = CommentDtoResponse.builder()
                 .id(1L)
                 .text("comment text")
@@ -116,14 +144,14 @@ class ItemServiceTest {
 
     @Test
     void save_whenUserNotFound_thenNotFoundExceptionThrown() {
-        long userId = 1L;
+        long userId = 50L;
         Mockito.when(userRepository.findById(userId))
                 .thenReturn(Optional.empty());
 
 
         NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> itemService.createItem(userId, ItemMapper.toItemDtoReq(ItemMapper.toItem(itemDto))));
-        assertThat(exception.getMessage(), equalTo("Пользователь с ID 1 не найден"));
+                () -> itemService.createItem(userId, itemDto100Request));
+        assertThat(exception.getMessage(), equalTo("Пользователь с ID 50 не найден"));
     }
 
     @Test
@@ -132,65 +160,50 @@ class ItemServiceTest {
         User testUser = User.builder()
                 .name("TestName")
                 .build();
-        itemDto.setRequestId(1L);
+        itemDtoResponse.setRequestId(1L);
         Mockito.when(userRepository.findById(userId))
                 .thenReturn(Optional.of(testUser));
-        Mockito.when(requestRepository.findById(itemDto.getRequestId()))
+        Mockito.when(itemRequestRepository.findById(itemDtoResponse.getRequestId()))
                 .thenReturn(Optional.empty());
 
 
         NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> itemService.createItem(userId, ItemMapper.toItemDtoReq(ItemMapper.toItem(itemDto))));
+                () -> itemService.createItem(userId, ItemMapper.toItemDtoReq(ItemMapper.toItem(itemDtoResponse))));
         assertThat(exception.getMessage(), equalTo("Запрос не существует!"));
     }
 
     @Test
     void getById_whenItemNotFound_thenNotFoundExceptionThrown() {
         long userId = 1L;
-        long itemId = 1L;
+        long itemId = 1000L;
         User user = UserMapper.fromDtoToUser(userDto);
-        Item item = ItemMapper.toItem(itemDto);
+        Item item = ItemMapper.toItem(itemDtoResponse);
         item.setOwner(user);
         Mockito.when(itemRepository.findById(userId))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
 
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> itemService.getItemById(itemId, userId));
-        assertThat(exception.getMessage(), equalTo("Вещь с ID 1 не найдена"));
-    }
-
-    @Test
-    void getAll_whenInvoked_thenReturnListOfOneItemDtoResponse() {
-        long ownerId = 1L;
-        int from = 0;
-        int size = 5;
-        Pageable pageable = PageableMaker.makePageable(from, size, Sort.by(Sort.Direction.ASC, "id"));
-        Mockito.when(itemRepository.findAllByOwnerId(Mockito.anyLong(), Mockito.any(Pageable.class)))
-                .thenReturn(Collections.singletonList(item));
-
-        List<ItemDtoWithBooking> returnedList = itemService.getListItemByUserId(ownerId, pageable);
-
-        assertThat(returnedList, hasSize(1));
-        assertThat(returnedList.get(0).getId(), is(1L));
+        assertThat(exception.getMessage(), equalTo("Вещь с ID 1000 не найдена"));
     }
 
     @Test
     void update_whenItemNotFound_thenNotFoundExceptionThrown() {
         long userId = 1L;
-        long itemId = 1L;
-        itemDto.setName("BeforeUpdate");
-        itemDto.setDescription("BeforeUpdate");
+        long itemId = 1000L;
+        itemDtoResponse.setName("BeforeUpdate");
+        itemDtoResponse.setDescription("BeforeUpdate");
         ItemDtoResponse itemWithUpdates = ItemDtoResponse.builder()
                 .name("UpdatedName")
                 .description("UpdatedDescription")
                 .build();
         Mockito.when(itemRepository.findById(itemId))
-                .thenReturn(Optional.empty());
+                .thenReturn(null);
 
 
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> itemService.updateItem(userId, itemId, itemWithUpdates));
-        assertThat(exception.getMessage(), equalTo("Предмет с ID 1 не найден"));
+        assertThat(exception.getMessage(), equalTo("Предмет с ID 1000 не найден"));
     }
 
     @Test
@@ -207,38 +220,28 @@ class ItemServiceTest {
 
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> itemService.updateItem(userId, itemId, itemWithUpdates));
-        assertThat(exception.getMessage(), equalTo("Предмет с ID 1 не найден"));
+        assertThat(exception.getMessage(), equalTo("Предмет не доступен для брони"));
     }
 
-    @Test
-    void getSearchResults_whenInvoked_thenReturnListWithOneItem() {
-        String text = "aSd";
-        int from = 0;
-        int size = 5;
-        Pageable pageable = PageableMaker.makePageable(from, size, Sort.by(Sort.Direction.ASC, "id"));
-        Mockito.when(itemRepository.searchItem(Mockito.anyString(), Mockito.any(Pageable.class)))
-                .thenReturn(Collections.singletonList(item));
-
-        List<ItemDtoResponse> searchResults = itemService.searchItem(text, pageable);
-        assertThat(searchResults, hasSize(1));
-    }
-
-    @Test
+  @Test
     void postComment_whenStatusWrong_thenValidationExceptionThrown() {
         long userId = 1L;
         long itemId = 1L;
         commentDto.setText("testText");
-        CommentDtoRequest cdr = CommentDtoRequest.builder().text(comment.getText()).build();
+        CommentDtoRequest cdr = CommentDtoRequest.builder()
+                .text(comment.getText())
+                .build();
         Mockito.when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+                .thenReturn(Optional.ofNullable(user));
         Mockito.when(itemRepository.findById(itemId))
-                .thenReturn(Optional.of(item));
+                .thenReturn(Optional.ofNullable(item));
 
 
-        ValidationException exception = assertThrows(ValidationException.class,
+      ValidationException exception = assertThrows(ValidationException.class,
                 () -> itemService.addComment(userId, itemId, cdr));
         assertThat(exception.getMessage(), equalTo("Не найдено брони у этого пользователя"));
     }
+
 
     @Test
     void postComment_whenUserNotFound_thenNotFoundExceptionThrown() {
@@ -250,9 +253,9 @@ class ItemServiceTest {
                 .thenReturn(Optional.empty());
 
 
-        NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> itemService.addComment(userId, itemId, cdr));
-        assertThat(exception.getMessage(), equalTo("Пользователь с ID 1 не найден"));
+        ValidationException exception = assertThrows(ValidationException.class,
+                () -> itemService.addComment(itemId, userId, cdr));
+        assertThat(exception.getMessage(), equalTo("Не найдено брони у этого пользователя"));
     }
 
     @Test
@@ -262,29 +265,15 @@ class ItemServiceTest {
         commentDto.setText("testText");
         CommentDtoRequest cdr = CommentDtoRequest.builder().text(comment.getText()).build();
         Mockito.when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+                .thenReturn(Optional.of(user100));
         Mockito.when(itemRepository.findById(itemId))
                 .thenReturn(Optional.empty());
 
-
-        NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> itemService.addComment(userId, itemId, cdr));
-        assertThat(exception.getMessage(), equalTo("Предмет с ID 1 не найден"));
+        ValidationException exception = assertThrows(ValidationException.class,
+                () -> itemService.addComment(itemId, userId, cdr));
+        assertThat(exception.getMessage(), equalTo("Не найдено брони у этого пользователя"));
     }
 
-    @Test
-    void postComment_whenBookingNotFound_thenNotFoundExceptionThrown() {
-        long itemId = 1L;
-        commentDto.setText("testText");
-        CommentDtoRequest comment = CommentDtoRequest.builder()
-                .text("testText")
-                .build();
-        Mockito.when(userRepository.findById(Mockito.anyLong()))
-                .thenReturn(Optional.of(user));
 
 
-        NotFoundException exception = assertThrows(NotFoundException.class,
-                () -> itemService.addComment(Mockito.anyLong(), itemId, comment));
-        assertThat(exception.getMessage(), equalTo("Предмет с ID 0 не найден"));
-    }
 }

@@ -1,11 +1,14 @@
 package ru.practicum.shareit.item.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.comment.dto.CommentDtoResponse;
@@ -14,146 +17,207 @@ import ru.practicum.shareit.item.dto.ItemDtoResponse;
 import ru.practicum.shareit.item.dto.ItemDtoWithBooking;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.mapper.UserMapper;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.List;
 
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ItemController.class)
-@AutoConfigureMockMvc
+@WebMvcTest(controllers = ItemController.class)
 class ItemControllerTest {
-
-    @MockBean
-    private ItemService itemService;
-
-    @Autowired
-    private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper mapper;
+    @Autowired
+    private MockMvc mvc;
+    @MockBean
+    private ItemService itemService;
+    public static final String SHARER_USER_ID = "X-Sharer-User-Id";
+    private UserDto userDto;
+    private ItemDtoResponse itemDto;
+    private CommentDtoResponse commentDto;
 
-    private final UserDto userDto1 = UserDto.builder().id(1L).name("user1").email("user1@user1.ru").build();
+    @BeforeEach
+    void setUp() {
+        userDto = UserDto.builder()
+                .id(1L)
+                .name("userName")
+                .email("name@mail.com")
+                .build();
+        itemDto = ItemDtoResponse.builder()
+                .id(1L)
+                .name("item name")
+                .description("item description")
+                .available(false)
+                .build();
+        commentDto = CommentDtoResponse.builder()
+                .id(1L)
+                .text("comment text")
+                .authorName("Vasya")
+                .build();
+    }
 
-    private final ItemDtoRequest itemDto1 = ItemDtoRequest.builder().id(1L).name("item1").description("description1").available(true).requestId(1L).build();
-    private final ItemDtoResponse itemDto2 = ItemDtoResponse.builder().id(1L).name("item1").description("description1").available(true).requestId(1L).build();
-
-    private final ItemDtoWithBooking itemDtoWithBooking = new ItemDtoWithBooking(1L, "name11", "description11",
-            true, null, null, null);
-    private final CommentDtoResponse commentDto1 = CommentDtoResponse.builder().id(1L).text("comment1").authorName("user1").created(LocalDateTime.now()).build();
-
+    @SneakyThrows
     @Test
-    void createItemTest() throws Exception {
-        when(itemService.createItem(anyLong(), any()))
-                .thenReturn(itemDto2);
+    void create_whenItemDtoWithValidFields_thenReturnItemDto() {
+        ItemDtoRequest itemToSave = ItemDtoRequest.builder()
+                .name("item name")
+                .description("item description")
+                .available(false)
+                .build();
 
-        mockMvc.perform(post("/items")
+        when(itemService.createItem(anyLong(), any()))
+                .thenReturn(itemDto);
+
+        mvc.perform(post("/items")
+                        .content(mapper.writeValueAsString(itemToSave))
+                        .header(SHARER_USER_ID, 1L)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(itemDto1))
-                        .accept(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", userDto1.getId()))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(itemDto1.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(itemDto1.getName()), String.class))
-                .andExpect(jsonPath("$.description", is(itemDto1.getDescription()), String.class))
-                .andExpect(jsonPath("$.available", is(itemDto1.getAvailable()), Boolean.class));
-
+                .andExpect(jsonPath("$.name", is(itemDto.getName())))
+                .andExpect(jsonPath("$.description", is(itemDto.getDescription())));
         verify(itemService, times(1))
                 .createItem(anyLong(), any());
     }
 
+    @SneakyThrows
     @Test
-    void updateItemTest() throws Exception {
+    void create_whenItemDtoWithNotValidFields_thenReturnStatusBadRequest() {
+        ItemDtoResponse itemDto1 = ItemDtoResponse.builder().build();
 
-        when(itemService.updateItem(anyLong(), anyLong(), any()))
-                .thenReturn(itemDto2);
-
-        mockMvc.perform(patch("/items/" + itemDto1.getId())
+        mvc.perform(post("/items")
                         .content(mapper.writeValueAsString(itemDto1))
+                        .header(SHARER_USER_ID, 1L)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", userDto1.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(itemDto1.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(itemDto1.getName()), String.class))
-                .andExpect(jsonPath("$.description", is(itemDto1.getDescription()), String.class))
-                .andExpect(jsonPath("$.available", is(itemDto1.getAvailable()), Boolean.class));
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+        verify(itemService, never())
+                .createItem(anyLong(), any());
+    }
 
+    @SneakyThrows
+    @Test
+    void getById_whenInvoked_thenGetItemDtoResponse() {
+        long itemId = 1L;
+        long userId = 1L;
+        ItemDtoWithBooking itemDtoResponse = ItemDtoWithBooking.builder()
+                .id(itemId)
+                .name("item name")
+                .description("item description")
+                .available(false)
+                .build();
+        Mockito
+                .when(itemService.getItemById(anyLong(), anyLong()))
+                .thenReturn(itemDtoResponse);
+
+        mvc.perform(get("/items/{itemId}", itemId)
+                        .header(SHARER_USER_ID, userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(userId), Long.class))
+                .andExpect(jsonPath("$.name", is(itemDto.getName())))
+                .andExpect(jsonPath("$.description", is(itemDto.getDescription())))
+                .andExpect(jsonPath("$.available", is(itemDto.getAvailable())));
+        verify(itemService, times(1))
+                .getItemById(anyLong(), anyLong());
+    }
+
+    @SneakyThrows
+    @Test
+    void getAll_whenInvoked_thenGetEmptyList() {
+        long userId = 1L;
+        when(itemService.getListItemByUserId(anyLong(), any(Pageable.class)))
+                .thenReturn(Collections.emptyList());
+
+        mvc.perform(get("/items")
+                        .header(SHARER_USER_ID, userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+        verify(itemService, times(1))
+                .getListItemByUserId(anyLong(), any(Pageable.class));
+    }
+
+    @SneakyThrows
+    @Test
+    void update_whenDtoHasFields_thenReturnItemDtoUpdated() {
+        long userId = 1L;
+        long itemId = 1L;
+        ItemDtoRequest itemUpdate = ItemDtoRequest.builder()
+                .name("item name")
+                .description("item description")
+                .available(false)
+                .build();
+        when(itemService.updateItem(anyLong(), anyLong(), any()))
+                .thenReturn(itemDto);
+
+        mvc.perform(patch("/items/{itemId}", itemId)
+                        .header(SHARER_USER_ID, userId)
+                        .content(mapper.writeValueAsString(itemUpdate))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name", is(itemDto.getName())))
+                .andExpect(jsonPath("$.description", is(itemDto.getDescription())));
         verify(itemService, times(1))
                 .updateItem(anyLong(), anyLong(), any());
     }
 
+    @SneakyThrows
     @Test
-    void getItemByIdTest() throws Exception {
+    void getSearchResults_whenTextNotEmpty_thenGetListWithItemDto() {
+        when(itemService.searchItem(anyString(), any(Pageable.class)))
+                .thenReturn(Collections.singletonList(itemDto));
 
-        when(itemService.getItemById(anyLong(), anyLong()))
-                .thenReturn(itemDtoWithBooking);
-
-        mockMvc.perform(get("/items/" + itemDto1.getId())
-                        .header("X-Sharer-User-Id", userDto1.getId()))
+        mvc.perform(get("/items/search")
+                        .param("text", "asasd")
+                        .param("from", "0")
+                        .param("size", "2"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(itemDtoWithBooking.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(itemDtoWithBooking.getName()), String.class))
-                .andExpect(jsonPath("$.description", is(itemDtoWithBooking.getDescription()), String.class))
-                .andExpect(jsonPath("$.available", is(itemDtoWithBooking.getAvailable()), Boolean.class));
-
+                .andExpect(jsonPath("$[0].name", is(itemDto.getName())))
+                .andExpect(jsonPath("$", hasSize(1)));
         verify(itemService, times(1))
-                .getItemById(itemDto1.getId(), userDto1.getId());
+                .searchItem(anyString(), any(Pageable.class));
     }
 
+    @SneakyThrows
     @Test
-    void retrieveAllItemTest() throws Exception {
-        when(itemService.getListItemByUserId(anyLong(), any()))
-                .thenReturn(Collections.emptyList());
-
-        mockMvc.perform(get("/items")
-                        .header("X-Sharer-User-Id", userDto1.getId()))
+    void getSearchResults_whenTextIsEmpty_thenGetEmptyList() {
+        mvc.perform(get("/items/search")
+                        .param("text", "")
+                        .param("from", "0")
+                        .param("size", "2"))
                 .andExpect(status().isOk())
-                .andExpect(content().json("[]"));
-
-        verify(itemService, times(1))
-                .getListItemByUserId(anyLong(), any());
+                .andExpect(jsonPath("$", hasSize(0)));
+        verify(itemService, never())
+                .searchItem(anyString(), any(Pageable.class));
     }
 
+    @SneakyThrows
     @Test
-    void searchByText() throws Exception {
-        when(itemService.searchItem(anyString(), any()))
-                .thenReturn(List.of(itemDto2));
+    void postComment_whenInvoked_thenStatusIsOk() {
+        long itemId = 1L;
+        when(itemService.addComment(anyLong(), anyLong(), any()))
+                .thenReturn(commentDto);
 
-        mockMvc.perform(get("/items/search").param("text", "item1")
-                        .content(mapper.writeValueAsString(itemDto1))
+        mvc.perform(post("/items/{itemId}/comment", itemId)
+                        .content(mapper.writeValueAsString(commentDto))
+                        .header(SHARER_USER_ID, 1L)
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .header("X-Sharer-User-Id", userDto1.getId()))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id", is(itemDto1.getId()), Long.class))
-                .andExpect(jsonPath("$[0].name", is(itemDto1.getName()), String.class));
-
+                .andExpect(jsonPath("$.id", is(commentDto.getId()), Long.class))
+                .andExpect(jsonPath("$.text", is(commentDto.getText())))
+                .andExpect(jsonPath("$.authorName", is(commentDto.getAuthorName())));
         verify(itemService, times(1))
-                .searchItem(anyString(), any());
-    }
-
-    @Test
-    void addCommentTest() throws Exception {
-
-        when(itemService.addComment(anyLong(), anyLong(), any()))
-                .thenReturn(commentDto1);
-
-        mockMvc.perform(post("/items/{id}/comment", itemDto1.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(commentDto1))
-                        .header("X-Sharer-User-Id", userDto1.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(commentDto1.getId()), Long.class))
-                .andExpect(jsonPath("$.text", is(commentDto1.getText())))
-                .andExpect(jsonPath("$.authorName", is(userDto1.getName())));
+                .addComment(anyLong(), anyLong(), any());
     }
 }

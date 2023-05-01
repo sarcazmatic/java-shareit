@@ -5,7 +5,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.practicum.shareit.user.service.UserService;
+
 
 
 import static org.hamcrest.MatcherAssert.*;
@@ -17,6 +20,9 @@ class ErrorHandlerTest {
 
     @Mock
     ErrorHandler errorHandler;
+
+    @Mock
+    ErrorResponse errorResponse;
 
     @Mock
     private UserService userService;
@@ -99,6 +105,16 @@ class ErrorHandlerTest {
                 .thenReturn(new ErrorResponse(v.getMessage()));
 
         assertThat(errorHandler.handleValidationException(v).getError(), equalTo("Не прошла валидация"));
+    }
+
+    @Test
+    void direct_NotFoundException_ErrorResponse() {
+        errorResponse = new ErrorResponse("Тест");
+        NotFoundException notFoundException = new NotFoundException("Тест");
+        ErrorResponse errorResponse1 = new ErrorResponse(notFoundException.getMessage());
+        assertThat(errorResponse.getError(), equalTo("Тест"));
+        assertThat(errorResponse1.getError(), equalTo("Тест"));
+        assertThat(notFoundException.getMessage(), equalTo("Тест"));
     }
 
 }

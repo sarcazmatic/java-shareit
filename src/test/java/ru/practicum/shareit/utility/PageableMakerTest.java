@@ -12,6 +12,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PageableMakerTest {
 
     @Test
+    void createMakerTest() {
+        PageableMaker pageableMaker = new PageableMaker();
+        assertThat(pageableMaker, notNullValue());
+    }
+    @Test
     void makePageable_whenInvoked_thenReturnPageable() {
         Integer from = 0;
         Integer size = 1;

@@ -40,23 +40,23 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
 
-    private final ItemRepository itemDbStorage;
+    private final ItemRepository itemRepository;
     private final ItemRequestRepository itemRequestRepository;
-    private final UserRepository userDbStorage;
+    private final UserRepository userRepository;
     private final BookingRepository bookingDbStorage;
     private final CommentRepository commentDbStorage;
 
     @Override
     public List<ItemDtoWithBooking> getListItemByUserId(Long userId, Pageable pageable) {
-        Map<Item, List<Comment>> commentsMap = commentDbStorage.findAllByItemIn(itemDbStorage.findAllByOwnerId(userId, pageable), Sort.by(Sort.Direction.DESC, "Created"))
+        Map<Item, List<Comment>> commentsMap = commentDbStorage.findAllByItemIn(itemRepository.findAllByOwnerId(userId, pageable), Sort.by(Sort.Direction.DESC, "Created"))
                 .stream()
                 .collect(Collectors.groupingBy(c -> c.getItem()));
 
-        Map<Item, List<Booking>> bookingsMap = bookingDbStorage.findAllByItemInAndStatus(itemDbStorage.findAllByOwnerId(userId, pageable), BookingStatus.APPROVED, Sort.by(Sort.Direction.DESC, "Start"))
+        Map<Item, List<Booking>> bookingsMap = bookingDbStorage.findAllByItemInAndStatus(itemRepository.findAllByOwnerId(userId, pageable), BookingStatus.APPROVED, Sort.by(Sort.Direction.DESC, "Start"))
                 .stream()
                 .collect(Collectors.groupingBy(b -> b.getItem()));
 
-        List<Item> items = itemDbStorage.findAllByOwnerId(userId, pageable);
+        List<Item> items = itemRepository.findAllByOwnerId(userId, pageable);
 
         return items.stream()
                 .map(item -> addBookingsAndComments(item, bookingsMap.getOrDefault(item, List.of()), commentsMap.getOrDefault(item, List.of())))
@@ -65,8 +65,13 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDtoWithBooking getItemById(Long itemId, Long userId) {
-        Item item = itemDbStorage.findById(itemId)
-                .orElseThrow(() -> new NotFoundException(String.format("Вещь с ID %s не найдена", itemId)));
+        Optional<Item> itemOpt = itemRepository.findById(itemId);
+        Item item;
+        if (itemOpt.isEmpty()) {
+            throw new NotFoundException(String.format("Вещь с ID %s не найдена", itemId));
+        } else {
+            item = itemOpt.get();
+        }
         List<Comment> commentList = getCommentsByItemId(item);
 
         if (userId.equals(item.getOwner().getId())) {
@@ -96,7 +101,7 @@ public class ItemServiceImpl implements ItemService {
     public ItemDtoResponse createItem(Long userId, ItemDtoRequest itemDtoRequest) {
         Item item = ItemMapper.toItemTemp(itemDtoRequest);
 
-        User user = userDbStorage.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
         item.setOwner(user);
 
@@ -107,14 +112,19 @@ public class ItemServiceImpl implements ItemService {
         }
 
         log.info("Создали вещь с ID {}", item.getId());
-        return ItemMapper.toItemDto(itemDbStorage.save(item));
+        return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
     @Transactional
     @Override
     public ItemDtoResponse updateItem(Long userId, Long itemId, ItemDtoResponse itemDtoResponse) {
-        Item updatedItem = itemDbStorage.findById(itemId)
-                .orElseThrow(() -> new NotFoundException(String.format("Предмет с ID %s не найден", itemId)));
+        Optional<Item> updatedItemOpt = itemRepository.findById(itemId);
+        Item updatedItem;
+        if (updatedItemOpt.isEmpty()) {
+            throw new NotFoundException(String.format("Предмет с ID %s не найден", itemId));
+        } else {
+            updatedItem = updatedItemOpt.get();
+        }
         Item item = ItemMapper.toItem(itemDtoResponse);
         if (!updatedItem.getOwner().getId().equals(userId))
             throw new NotFoundException("Предмет не доступен для брони");
@@ -131,13 +141,13 @@ public class ItemServiceImpl implements ItemService {
             updatedItem.setAvailable(item.getAvailable());
         }
 
-        return ItemMapper.toItemDto(itemDbStorage.save(updatedItem));
+        return ItemMapper.toItemDto(itemRepository.save(updatedItem));
     }
 
     @Override
     public List<ItemDtoResponse> searchItem(String text, Pageable pageable) {
 
-        return itemDbStorage.searchItem(text, pageable)
+        return itemRepository.searchItem(text, pageable)
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(toList());
@@ -147,14 +157,19 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public CommentDtoResponse addComment(Long itemId, Long userId, CommentDtoRequest commentDtoRequest) {
         LocalDateTime ldtNow = LocalDateTime.now();
-        User user = userDbStorage.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
-        Item item = itemDbStorage.findById(itemId)
-                .orElseThrow(() -> new NotFoundException(String.format("Предмет с ID %s не найден", itemId)));
-        Comment comment = CommentMapper.toComment(commentDtoRequest, item, user);
+        Optional<User> user = userRepository.findById(userId);
+        Optional<Item> item = itemRepository.findById(itemId);
+
+        if (!user.isPresent())
+                throw new NotFoundException(String.format("Пользователь с ID %s не найден", userId));
+        if (!item.isPresent())
+            throw new NotFoundException(String.format("Предмет с ID %s не найден", itemId));
+
+        Comment comment = CommentMapper.toComment(commentDtoRequest, item.get(), user.get());
 
         List<Booking> booking = bookingDbStorage.findByBookerIdStatePast(comment.getUser().getId(),
                 ldtNow);
+
         if (booking.isEmpty()) {
             throw new ValidationException("Не найдено брони у этого пользователя");
         }
