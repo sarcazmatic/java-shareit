@@ -42,40 +42,40 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ItemServiceTest {
 
     @Mock
-    ItemRepository itemRepository;
+    private ItemRepository itemRepository;
 
     @InjectMocks
-    ItemService itemService;
+    private ItemService itemService;
 
     @Mock
-    ItemRequestRepository itemRequestRepository;
+    private ItemRequestRepository itemRequestRepository;
 
     @Mock
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Mock
-    UserService userService;
+    private UserService userService;
 
     @Mock
-    BookingRepository bookingRepository;
+    private BookingRepository bookingRepository;
     @Mock
-    ItemRequestService itemRequestService;
-    static User user;
-    static UserDto userDto;
-    static Item item;
-    static ItemDtoResponse itemDtoResponse;
-    static ItemRequest itemRequest;
-    static Comment comment;
-    static CommentDtoResponse commentDto;
-    static Booking booking1;
-    static Booking booking2;
+    private ItemRequestService itemRequestService;
+    private User user;
+    private UserDto userDto;
+    private Item item;
+    private ItemDtoResponse itemDtoResponse;
+    private ItemRequest itemRequest;
+    private Comment comment;
+    private CommentDtoResponse commentDto;
+    private Booking booking1;
+    private Booking booking2;
 
-    static User user100 = new User(100L, "user100", "user100@mail.ru");
+    private User user100 = new User(100L, "user100", "user100@mail.ru");
 
-    static Item item100 = new Item(100L, "item100", "item100description", true, user100, null);
-    static ItemDtoRequest itemDto100Request = ItemMapper.toItemDtoReq(item100);
+    private Item item100 = new Item(100L, "item100", "item100description", true, user100, null);
+    private ItemDtoRequest itemDto100Request = ItemMapper.toItemDtoReq(item100);
 
-    static Comment comment100 = new Comment(100L, "comment100", item100, user100, LocalDateTime.now());
+    private Comment comment100 = new Comment(100L, "comment100", item100, user100, LocalDateTime.now());
 
 
     @Autowired
@@ -142,9 +142,6 @@ class ItemServiceTest {
     @Test
     void save_whenUserNotFound_thenNotFoundExceptionThrown() {
         long userId = 50L;
-        Mockito.when(userRepository.findById(userId))
-                .thenReturn(Optional.empty());
-
 
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> itemService.createItem(userId, itemDto100Request));
@@ -158,11 +155,6 @@ class ItemServiceTest {
                 .name("TestName")
                 .build();
         itemDtoResponse.setRequestId(1L);
-        Mockito.when(userRepository.findById(userId))
-                .thenReturn(Optional.of(testUser));
-        Mockito.when(itemRequestRepository.findById(itemDtoResponse.getRequestId()))
-                .thenReturn(Optional.empty());
-
 
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> itemService.createItem(userId, ItemMapper.toItemDtoReq(ItemMapper.toItem(itemDtoResponse))));

@@ -12,6 +12,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.utility.PageableMaker;
 
+import javax.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DataJpaTest
+@Transactional
 class ItemRepositoryTest {
 
     @Autowired
@@ -28,11 +30,11 @@ class ItemRepositoryTest {
     @Autowired
     private ItemRepository itemRepository;
 
-    User user1;
-    Item item1;
-    User user2;
-    Item item2;
-    Pageable pageable;
+    private User user1;
+    private Item item1;
+    private User user2;
+    private Item item2;
+    private Pageable pageable;
 
     @BeforeEach
     void beforeEach() {

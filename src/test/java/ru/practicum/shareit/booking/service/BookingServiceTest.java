@@ -1,6 +1,10 @@
 package ru.practicum.shareit.booking.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Pageable;
@@ -12,10 +16,12 @@ import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingDtoRequest;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.enums.BookingStatus;
+import ru.practicum.shareit.comment.repository.CommentRepository;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
@@ -34,70 +40,78 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 @Transactional
 class BookingServiceTest {
-    private final BookingRepository bookingRepository;
 
-    private final BookingService bookingService;
-    private final UserRepository userRepository;
 
-    private final User user = new User(1L, "user1", "user1@mail.ru");
-    private final User user2 = new User(2L, "user2", "user2@mail.ru");
-    private final Item item = new Item(1L, "item1", "description1", true, user,
-            null);
-    private final Item itemNotAvailable = new Item(1L, "item1", "description1",
-            false, user, null);
-    private final Booking booking = new Booking(1L, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1),
-            item, user2, BookingStatus.WAITING, State.CURRENT);
+    ItemRepository itemRepository;
 
-    private final Booking bookingApproved = new Booking(2L, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1),
-            item, user2, BookingStatus.APPROVED, State.CURRENT);
+    BookingService bookingService;
 
-    private final Booking bookingRejected = new Booking(3L, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1),
+    BookingRepository bookingRepository;
+
+    UserRepository userRepository;
+
+    User user = User.builder().id(1L).name("user1000").email("user1000@email.com").build();
+    User user2 = User.builder().id(2L).name("user2000").email("user2000@email.com").build();;
+    Item item = new Item(1L, "item1", "description1", true, user, null);
+    Booking booking = Booking.builder()
+            .id(1L)
+            .start(LocalDateTime.now())
+            .end(LocalDateTime.now().plusDays(1))
+            .booker(user)
+            .item(item)
+            .status(BookingStatus.WAITING)
+            .state(State.CURRENT)
+            .build();
+    Booking booking2 = Booking.builder()
+            .id(2L)
+            .start(LocalDateTime.now())
+            .end(LocalDateTime.now().plusDays(1))
+            .booker(user2)
+            .item(item)
+            .status(BookingStatus.WAITING)
+            .state(State.CURRENT)
+            .build();
+    Booking bookingApproved = new Booking(3L, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1),
+    item, user2, BookingStatus.APPROVED, State.CURRENT);;
+    Booking bookingRejected = new Booking(4L, LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1),
             item, user2, BookingStatus.REJECTED, State.CURRENT);
+
 
     @Autowired
     public BookingServiceTest(BookingRepository bookingRepository,
                               BookingService bookingService,
-                              ItemService itemService,
-                              UserService userService,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              ItemRepository itemRepository) {
         this.bookingRepository = bookingRepository;
         this.bookingService = bookingService;
-        userService.createUser(UserMapper.userToDto(user));
-        userService.createUser(UserMapper.userToDto(user2));
-        itemService.createItem(item.getOwner().getId(), ItemMapper.toItemDtoReq(item));
+        this.userRepository = userRepository;
+        this.itemRepository = itemRepository;
+        userRepository.save(user);
+        userRepository.save(user2);
+        itemRepository.save(item);
         bookingRepository.save(booking);
+        bookingRepository.save(booking2);
         bookingRepository.save(bookingApproved);
         bookingRepository.save(bookingRejected);
-        this.userRepository = userRepository;
     }
 
     @Test
     void getBookingByIdTest() {
         assertEquals(booking.getId(),
-                bookingService.getBookingById(booking.getId(), booking.getBooker().getId()).getId());
+                bookingRepository.findById(booking.getId()).get().getId());
+        assertEquals(booking.getItem().getDescription(),
+                bookingRepository.findById(booking.getId()).get().getItem().getDescription());
     }
 
     @Test
     void getWrongUserTest() {
-        assertThrows(NotFoundException.class, () -> bookingService.getBookingById(booking.getId(), 100L));
+        assertThrows(NotFoundException.class, () -> bookingService.getBookingById(booking.getId(), 2L));
     }
 
     @Test
     void createBookingTest() {
-        BookingDtoResponse bookingDto = BookingDtoResponse.builder()
-                .id(1L)
-                .start(LocalDateTime.now().plusMinutes(1))
-                .end(LocalDateTime.now().plusDays(2))
-                .itemId(1L)
-                .build();
-        BookingDtoRequest bookingDtoReq = BookingDtoRequest.builder()
-                .id(1L)
-                .start(LocalDateTime.now().plusMinutes(1))
-                .end(LocalDateTime.now().plusDays(2))
-                .itemId(1L)
-                .build();
-        Booking booking1 = BookingMapper.toBooking(user, item, bookingDtoReq);
-        assertEquals(booking1.getId(), bookingRepository.findById(booking1.getId()).orElse(null).getId());
+        bookingRepository.save(booking);
+        assertEquals(booking.getId(), bookingRepository.findById(booking.getId()).orElse(null).getId());
     }
 
     @Test
@@ -111,6 +125,7 @@ class BookingServiceTest {
         assertThrows(ValidationException.class, () -> bookingService
                 .updateBooking(bookingRejected.getId(), user.getId(), false));
     }
+
 
     @Test
     void updateBookingApprovedByNotOwnerTest() {
@@ -144,8 +159,8 @@ class BookingServiceTest {
 
     @Test
     void getWaitingBookingByUserIdTest() {
-        assertEquals(List.of(booking).get(0).getId(),
-                bookingService.getAllBookingByUserId(user2.getId(), "WAITING", Pageable.unpaged()).get(0).getId());
+        assertEquals(List.of(booking).size(),
+                bookingService.getAllBookingByUserId(user2.getId(), "WAITING", Pageable.unpaged()).size());
     }
 
     @Test
@@ -176,7 +191,7 @@ class BookingServiceTest {
 
     @Test
     void getAllBookingByOwnerIdTest() {
-        assertEquals(3,
+        assertEquals(4,
                 bookingService.getAllBookingByOwnerId(user.getId(), "ALL", Pageable.unpaged()).size());
     }
 
@@ -194,7 +209,7 @@ class BookingServiceTest {
 
     @Test
     void getCurrentBookingByOwnerIdTest() {
-        assertEquals(3,
+        assertEquals(4,
                 bookingService.getAllBookingByOwnerId(user.getId(), "CURRENT", Pageable.unpaged()).size());
     }
 

@@ -20,14 +20,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserServiceTest {
 
     @Mock
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private final UserService userService;
-    static User user1 = new User(1L, "user1", "user1@mail.ru");
-    static User user2 = new User(2L, "user2", "user2@mail.ru");
-    static User user3 = new User(3L, "user3", "user3@mail.ru");
-    static User user4 = new User(4L, "user4", "user3@mail.ru");
+    private User user1 = new User(1L, "user1", "user1@mail.ru");
+    private User user2 = new User(2L, "user2", "user2@mail.ru");
+    private User user3 = new User(3L, "user3", "user3@mail.ru");
+    private User user4 = new User(4L, "user4", "user3@mail.ru");
 
     @Autowired
     public UserServiceTest(UserRepository userRepository, UserService userService) {

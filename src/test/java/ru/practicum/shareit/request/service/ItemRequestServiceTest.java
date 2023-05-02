@@ -26,6 +26,7 @@ import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@Transactional
 class ItemRequestServiceTest {
     @Mock
     private ItemRequestRepository requestRepository;
@@ -47,7 +49,7 @@ class ItemRequestServiceTest {
     @Mock
     private ItemRepository itemRepository;
     @Captor
-    ArgumentCaptor<ItemRequest> itemRequestArgumentCaptor;
+    private ArgumentCaptor<ItemRequest> itemRequestArgumentCaptor;
     @InjectMocks
     private ItemRequestServiceImpl itemRequestService;
     private ItemDtoResponse itemDto;

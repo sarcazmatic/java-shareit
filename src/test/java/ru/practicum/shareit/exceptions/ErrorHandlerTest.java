@@ -17,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ErrorHandlerTest {
 
     @Mock
-    ErrorHandler errorHandler;
+    private ErrorHandler errorHandler;
 
     @Mock
-    ErrorResponse errorResponse;
+    private ErrorResponse errorResponse;
 
     @Mock
     private UserService userService;
