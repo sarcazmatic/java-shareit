@@ -66,6 +66,7 @@ class BookingServiceTest {
     void getBookingByIdTest() {
         assertEquals(booking.getId(), bookingRepository.findById(booking.getId()).get().getId());
         assertEquals(booking.getItem().getDescription(), bookingRepository.findById(booking.getId()).get().getItem().getDescription());
+        assertEquals(booking.getItem().getId(), bookingService.getBookingById(1L, 1L).getItemId());
     }
 
     @Test
@@ -175,6 +176,18 @@ class BookingServiceTest {
     @Test
     void getAllBookingByOwnerIdBadStateTest() {
         assertThrows(ValidationException.class, () -> bookingService.getAllBookingByOwnerId(user.getId(), "BAD_STATE", Pageable.unpaged()).get(0).getId());
+    }
+
+    @Test
+    void setApprovedStatusTest() {
+        boolean isApproved = true;
+        assertEquals(BookingStatus.APPROVED, bookingService.updateBooking(booking.getId(), user.getId(), isApproved).getStatus());
+    }
+
+    @Test
+    void setApprovedStatusFalseTest() {
+        boolean isApproved = false;
+        assertEquals(BookingStatus.REJECTED, bookingService.updateBooking(booking.getId(), user.getId(), isApproved).getStatus());
     }
 
 }

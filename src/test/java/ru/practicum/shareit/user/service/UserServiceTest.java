@@ -71,7 +71,7 @@ class UserServiceTest {
 
     @Test
     void createDoubleUserTest() {
-        assertThrows(ConflictException.class, () -> userService.createUser(UserMapper.userToDto(user4)));
+        assertThrows(ConflictException.class, () -> userService.createUser(UserMapper.userToDto(user3)));
     }
 
 }

@@ -35,20 +35,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public User createUser(UserDto userDto) throws ConflictException {
+    public User createUser(UserDto userDto) {
 
         User user = UserMapper.fromDtoToUser(userDto);
 
         if (user.getEmail() == null)
             throw new ValidationException("Почта не найдена");
 
-        if (userDbStorage.existsByEmail(user.getEmail())) {
+        if (!userDbStorage.existsByEmailAndId(user.getEmail(), user.getId())) {
+            log.info("Пользователь с почтой {} был создан", user.getEmail());
+            return userDbStorage.save(user);
+        } else {
             log.warn("Пользователь с почтой {} уже существует", user.getEmail());
             throw new ConflictException("Пользователь уже существует");
-        } else {
-            log.info("Пользователь с почтой {} был создан", user.getEmail());
-            User createdUser = userDbStorage.save(user);
-            return createdUser;
         }
 
     }
