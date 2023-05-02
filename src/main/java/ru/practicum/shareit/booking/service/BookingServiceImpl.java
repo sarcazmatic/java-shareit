@@ -100,12 +100,6 @@ public class BookingServiceImpl implements BookingService {
                         bookingId)));
     }
 
-    public List<Booking> getAllUser(long userId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
-        return bookingRepository.findAllByBooker_IdOrderByStartDesc(userId);
-    }
-
     public State getStateByStr(String stateStr) {
 
         State state;

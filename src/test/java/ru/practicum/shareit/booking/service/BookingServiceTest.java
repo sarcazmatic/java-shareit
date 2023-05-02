@@ -175,7 +175,6 @@ class BookingServiceTest {
     @Test
     void getAllBookingByOwnerIdBadStateTest() {
         assertThrows(ValidationException.class, () -> bookingService.getAllBookingByOwnerId(user.getId(), "BAD_STATE", Pageable.unpaged()).get(0).getId());
-
     }
 
 }
