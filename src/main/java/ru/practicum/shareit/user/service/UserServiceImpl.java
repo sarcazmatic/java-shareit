@@ -42,13 +42,13 @@ public class UserServiceImpl implements UserService {
         if (user.getEmail() == null)
             throw new ValidationException("Почта не найдена");
 
-        try {
+        if (userDbStorage.existsByEmail(user.getEmail())) {
+            log.warn("Пользователь с почтой {} уже существует", user.getEmail());
+            throw new ConflictException("Пользователь уже существует");
+        } else {
             log.info("Пользователь с почтой {} был создан", user.getEmail());
             User createdUser = userDbStorage.save(user);
             return createdUser;
-        } catch (RuntimeException e) {
-            log.warn("Пользователь с почтой {} уже существует", user.getEmail());
-            throw new ConflictException("Пользователь уже существует");
         }
 
     }
