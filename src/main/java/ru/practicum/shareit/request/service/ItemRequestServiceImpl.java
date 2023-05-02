@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -87,15 +88,13 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     private Map<Long, List<Item>> extractItemsToRequests() {
         Map<Long, List<Item>> requestItemMap = new HashMap<>();
-        List<Item> itemList = itemRepository.findAll();
+        List<Item> itemList = itemRepository.findAllByRequestIsPresent();
         List<ItemRequest> itemRequestList = itemRequestRepository.findAll();
         for (ItemRequest itemRequest : itemRequestList) {
             List<Item> itemsToAdd = new ArrayList<>();
             for (Item item : itemList) {
-                if (item.getRequest() != null &&
-                        item.getRequest().getId().equals(itemRequest.getId())) {
+                if (item.getRequest().getId().equals(itemRequest.getId()))
                     itemsToAdd.add(item);
-                }
             }
             requestItemMap.put(itemRequest.getId(), itemsToAdd);
         }

@@ -63,9 +63,9 @@ public class UserServiceImpl implements UserService {
 
         String updatedEmail = user.getEmail();
 
-        if (updatedEmail != null && !updatedEmail.isBlank()) {
+        if (updatedEmail != null && !updatedEmail.isBlank())
             updatedUser.setEmail(updatedEmail);
-        }
+
         return updatedUser;
     }
 
