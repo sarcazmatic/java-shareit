@@ -16,15 +16,11 @@ import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    Optional<Booking> findFirstByItem_IdAndBooker_Id(long itemId, long userId);
-
-    List<Booking> findAllByItemInAndStatus(List<Item> itemsIds, BookingStatus bookingStatus, Sort sort);
+    List<Booking> findAllByItem_IdInAndStatus(List<Long> itemsIds, BookingStatus bookingStatus, Sort sort);
 
     List<Booking> findAllByBooker_Id(Long id);
 
     List<Booking> findAllByItem_Owner_Id(Long id);
-
-    Booking findFirstByBooker_IdAndState(Long id, State state);
 
     List<Booking> findAllByItem_Owner_Id(Long userId, Pageable pageable);
 
@@ -58,7 +54,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findAllByItem_Owner_IdAndStatus(Long ownerId, BookingStatus status, Pageable pageable);
 
     @Query("SELECT b FROM Booking b " +
-            "WHERE b.booker.id = :id AND b.end < :currentTime AND upper(b.status) = UPPER('APPROVED')" +
+            "WHERE b.booker.id = :id AND b.end < :currentTime AND upper(b.status) = ('APPROVED')" +
             "ORDER BY b.start DESC")
     List<Booking> findByBookerIdStatePastPageable(@Param("id") long id, @Param("currentTime") LocalDateTime currentTime, Pageable pageable);
 

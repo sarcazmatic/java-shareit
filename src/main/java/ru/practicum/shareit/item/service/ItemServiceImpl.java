@@ -48,11 +48,11 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDtoWithBooking> getListItemByUserId(Long userId, Pageable pageable) {
-        Map<Item, List<Comment>> commentsMap = commentDbStorage.findAllByItemIn(itemRepository.findAllByOwnerId(userId, pageable), Sort.by(Sort.Direction.DESC, "Created"))
+        Map<Item, List<Comment>> commentsMap = commentDbStorage.findAllByItem_IdIn(itemRepository.findAllIdByOwnerId(userId, pageable), Sort.by(Sort.Direction.DESC, "Created"))
                 .stream()
                 .collect(Collectors.groupingBy(c -> c.getItem()));
 
-        Map<Item, List<Booking>> bookingsMap = bookingDbStorage.findAllByItemInAndStatus(itemRepository.findAllByOwnerId(userId, pageable), BookingStatus.APPROVED, Sort.by(Sort.Direction.DESC, "Start"))
+        Map<Item, List<Booking>> bookingsMap = bookingDbStorage.findAllByItem_IdInAndStatus(itemRepository.findAllIdByOwnerId(userId, pageable), BookingStatus.APPROVED, Sort.by(Sort.Direction.DESC, "Start"))
                 .stream()
                 .collect(Collectors.groupingBy(b -> b.getItem()));
 
@@ -65,13 +65,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDtoWithBooking getItemById(Long itemId, Long userId) {
-        Optional<Item> itemOpt = itemRepository.findById(itemId);
-        Item item;
-        if (itemOpt.isEmpty()) {
-            throw new NotFoundException(String.format("Вещь с ID %s не найдена", itemId));
-        } else {
-            item = itemOpt.get();
-        }
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException(String.format("Вещь с ID %s не найдена", itemId)));
         List<Comment> commentList = getCommentsByItemId(item);
 
         if (userId.equals(item.getOwner().getId())) {

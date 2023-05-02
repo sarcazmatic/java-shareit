@@ -36,7 +36,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public ItemRequestDtoResponse createItemRequest(Long userId, ItemRequestDtoRequest itemRequestDtoRequest) {
-
         LocalDateTime ldt = LocalDateTime.now();
 
         User user = userRepository.findById(userId)
@@ -52,7 +51,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public List<ItemRequestDtoResponse> getAllMyItemRequest(Long userId) {
-
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
 
@@ -66,7 +64,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public ItemRequestDtoResponse getItemRequestById(Long userId, Long itemRequestId) {
-
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с таким ID не найден")));
 
@@ -80,7 +77,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     @Override
     public List<ItemRequestDtoResponse> findAll(Long userId, int from, int size) {
         Pageable pageable = PageableMaker.makePageable(from, size, Sort.by("created").ascending());
-
         Map<Long, List<Item>> requestItemMap = extractItemsToRequests();
         return itemRequestRepository.findByRequester_IdNot(userId, pageable)
                 .stream()

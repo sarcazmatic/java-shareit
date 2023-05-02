@@ -39,18 +39,16 @@ public class UserServiceImpl implements UserService {
 
         User user = UserMapper.fromDtoToUser(userDto);
 
-        if (user.getEmail() != null) {
-            try {
-                log.info("Пользователь с почтой {} был создан", user.getEmail());
-                User createdUser = userDbStorage.save(user);
-                return createdUser;
-            } catch (RuntimeException e) {
-                log.warn("Пользователь с почтой {} уже существует", user.getEmail());
-                throw new ConflictException("Пользователь уже существует");
-            }
-
-        } else {
+        if (user.getEmail() == null)
             throw new ValidationException("Почта не найдена");
+
+        if (!userDbStorage.existsById(user.getId())) {
+            User createdUser = userDbStorage.save(user);
+            log.info("Пользователь с почтой {} был создан", user.getEmail());
+            return createdUser;
+        } else {
+            log.warn("Пользователь с почтой {} уже существует", user.getEmail());
+            throw new ConflictException("Пользователь уже существует");
         }
 
     }

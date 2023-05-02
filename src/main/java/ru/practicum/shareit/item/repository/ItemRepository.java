@@ -11,6 +11,8 @@ import java.util.List;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
+    @Query("SELECT i.id FROM Item i WHERE i.owner.id = :id")
+    List<Long> findAllIdByOwnerId(@Param("id") Long ownerId, Pageable pageable);
 
     List<Item> findAllByOwnerId(Long ownerId, Pageable pageable);
 
