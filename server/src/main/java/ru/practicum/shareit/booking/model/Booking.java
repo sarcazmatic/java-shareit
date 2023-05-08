@@ -1,6 +1,5 @@
 package ru.practicum.shareit.booking.model;
 
-import jdk.jfr.Name;
 import lombok.*;
 import ru.practicum.shareit.booking.enums.BookingStatus;
 import ru.practicum.shareit.booking.enums.State;
