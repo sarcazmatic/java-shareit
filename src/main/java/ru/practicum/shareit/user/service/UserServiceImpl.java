@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
@@ -34,13 +35,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public User createUser(UserDto userDto) throws ConflictException {
+    public User createUser(UserDto userDto) {
 
         User user = UserMapper.fromDtoToUser(userDto);
 
-            User createdUser = userDbStorage.save(user);
+        if (user.getEmail() == null)
+            throw new ValidationException("Почта не найдена");
+
+        if (!userDbStorage.existsByEmailAndId(user.getEmail(), user.getId())) {
             log.info("Пользователь с почтой {} был создан", user.getEmail());
-            return createdUser;
+            return userDbStorage.save(user);
+        } else {
+            log.warn("Пользователь с почтой {} уже существует", user.getEmail());
+            throw new ConflictException("Пользователь уже существует");
+        }
 
     }
 
@@ -55,9 +63,9 @@ public class UserServiceImpl implements UserService {
 
         String updatedEmail = user.getEmail();
 
-        if (updatedEmail != null && !updatedEmail.isBlank()) {
+        if (updatedEmail != null && !updatedEmail.isBlank())
             updatedUser.setEmail(updatedEmail);
-        }
+
         return updatedUser;
     }
 

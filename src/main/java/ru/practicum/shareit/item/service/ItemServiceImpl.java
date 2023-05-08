@@ -2,6 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.model.Booking;
@@ -12,13 +13,16 @@ import ru.practicum.shareit.comment.model.Comment;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.comment.mapper.CommentMapper;
+import ru.practicum.shareit.item.dto.ItemDtoRequest;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.comment.dto.CommentDtoResponse;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoResponse;
 import ru.practicum.shareit.item.dto.ItemDtoWithBooking;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.comment.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.repository.ItemRequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -36,22 +40,23 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
 
-    private final ItemRepository itemDbStorage;
-    private final UserRepository userDbStorage;
+    private final ItemRepository itemRepository;
+    private final ItemRequestRepository itemRequestRepository;
+    private final UserRepository userRepository;
     private final BookingRepository bookingDbStorage;
     private final CommentRepository commentDbStorage;
 
     @Override
-    public List<ItemDtoWithBooking> getListItemByUserId(Long userId) {
-        Map<Item, List<Comment>> commentsMap = commentDbStorage.findAllByItemIn(itemDbStorage.findAllByOwnerIdOrderById(userId), Sort.by(Sort.Direction.DESC, "Created"))
+    public List<ItemDtoWithBooking> getListItemByUserId(Long userId, Pageable pageable) {
+        Map<Item, List<Comment>> commentsMap = commentDbStorage.findAllByItem_IdIn(itemRepository.findAllIdByOwnerId(userId, pageable), Sort.by(Sort.Direction.DESC, "Created"))
                 .stream()
-                .collect(Collectors.groupingBy(c -> c.getItem())); //делаем группы по итемам, которые в поле итем в комменте
-        //тут мы делаем мапу – Итем-Комменты к итему
-        Map<Item, List<Booking>> bookingsMap = bookingDbStorage.findAllByItemInAndStatus(itemDbStorage.findAllByOwnerIdOrderById(userId), BookingStatus.APPROVED, Sort.by(Sort.Direction.DESC, "Start"))
+                .collect(Collectors.groupingBy(c -> c.getItem()));
+
+        Map<Item, List<Booking>> bookingsMap = bookingDbStorage.findAllByItem_IdInAndStatus(itemRepository.findAllIdByOwnerId(userId, pageable), BookingStatus.APPROVED, Sort.by(Sort.Direction.DESC, "Start"))
                 .stream()
                 .collect(Collectors.groupingBy(b -> b.getItem()));
 
-        List<Item> items = itemDbStorage.findAllByOwnerIdOrderById(userId);
+        List<Item> items = itemRepository.findAllByOwnerId(userId, pageable);
 
         return items.stream()
                 .map(item -> addBookingsAndComments(item, bookingsMap.getOrDefault(item, List.of()), commentsMap.getOrDefault(item, List.of())))
@@ -60,7 +65,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDtoWithBooking getItemById(Long itemId, Long userId) {
-        Item item = itemDbStorage.findById(itemId)
+        Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException(String.format("Вещь с ID %s не найдена", itemId)));
         List<Comment> commentList = getCommentsByItemId(item);
 
@@ -88,24 +93,34 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Transactional
-    public ItemDto createItem(Long userId, ItemDto itemDto) {
-        Item item = ItemMapper.toItemTemp(itemDto);
+    public ItemDtoResponse createItem(Long userId, ItemDtoRequest itemDtoRequest) {
+        Item item = ItemMapper.toItemTemp(itemDtoRequest);
 
-        User user = userDbStorage.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
         item.setOwner(user);
+
+        if (itemDtoRequest.getRequestId() != null) {
+            ItemRequest itemRequest = itemRequestRepository.findById(itemDtoRequest.getRequestId())
+                    .orElseThrow(() -> new NotFoundException("Запрос не существует!"));
+            item.setRequest(itemRequest);
+        }
+
         log.info("Создали вещь с ID {}", item.getId());
-        return ItemMapper.toItemDto(itemDbStorage.save(item));
+        return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
     @Transactional
     @Override
-    public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
-        Item updatedItem = itemDbStorage.findById(itemId)
-                .orElseThrow(() -> new NotFoundException(String.format("Предмет с ID %s не найден", itemId)));
-        User user = userDbStorage.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
-        Item item = ItemMapper.toItem(itemDto, user);
+    public ItemDtoResponse updateItem(Long userId, Long itemId, ItemDtoResponse itemDtoResponse) {
+        Optional<Item> updatedItemOpt = itemRepository.findById(itemId);
+        Item updatedItem;
+        if (updatedItemOpt.isEmpty()) {
+            throw new NotFoundException(String.format("Предмет с ID %s не найден", itemId));
+        } else {
+            updatedItem = updatedItemOpt.get();
+        }
+        Item item = ItemMapper.toItem(itemDtoResponse);
         if (!updatedItem.getOwner().getId().equals(userId))
             throw new NotFoundException("Предмет не доступен для брони");
 
@@ -121,13 +136,13 @@ public class ItemServiceImpl implements ItemService {
             updatedItem.setAvailable(item.getAvailable());
         }
 
-        return ItemMapper.toItemDto(itemDbStorage.save(updatedItem));
+        return ItemMapper.toItemDto(itemRepository.save(updatedItem));
     }
 
     @Override
-    public List<ItemDto> searchItem(String text) {
+    public List<ItemDtoResponse> searchItem(String text, Pageable pageable) {
 
-        return itemDbStorage.searchItem(text)
+        return itemRepository.searchItem(text, pageable)
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(toList());
@@ -137,14 +152,26 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public CommentDtoResponse addComment(Long itemId, Long userId, CommentDtoRequest commentDtoRequest) {
         LocalDateTime ldtNow = LocalDateTime.now();
-        User user = userDbStorage.findById(userId)
-                .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
-        Item item = itemDbStorage.findById(itemId)
-                .orElseThrow(() -> new NotFoundException(String.format("Предмет с ID %s не найден", itemId)));
-        Comment comment = CommentMapper.toComment(commentDtoRequest, item, user);
+        Optional<User> user = userRepository.findById(userId);
+        Optional<Item> item = itemRepository.findById(itemId);
+
+        if (user.isEmpty())
+            throw new NotFoundException(String.format("Пользователь с ID %s не найден", userId));
+        if (item.isEmpty())
+            throw new NotFoundException(String.format("Предмет с ID %s не найден", itemId));
+
+        Optional<Comment> commentOpt = Optional.of(CommentMapper.toComment(commentDtoRequest, item.get(), user.get(), ldtNow));
+        Comment comment;
+
+        if (commentOpt.get().getText().isEmpty()) {
+            throw new NotFoundException("Комментарий не найден");
+        } else {
+            comment = commentOpt.get();
+        }
 
         List<Booking> booking = bookingDbStorage.findByBookerIdStatePast(comment.getUser().getId(),
                 ldtNow);
+
         if (booking.isEmpty()) {
             throw new ValidationException("Не найдено брони у этого пользователя");
         }

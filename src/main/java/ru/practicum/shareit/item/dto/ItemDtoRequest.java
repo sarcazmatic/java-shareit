@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @Builder
-public class ItemDto {
+public class ItemDtoRequest {
 
     private Long id;
     @NotBlank(groups = Create.class)
@@ -18,4 +18,6 @@ public class ItemDto {
     private String description;
     @NotNull(groups = Create.class)
     private Boolean available;
+    private Long requestId;
+
 }

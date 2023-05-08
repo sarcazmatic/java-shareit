@@ -1,12 +1,15 @@
 package ru.practicum.shareit.booking.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDtoRequest;
 import ru.practicum.shareit.booking.dto.BookingDtoResponse;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.utility.Create;
+import ru.practicum.shareit.utility.PageableMaker;
 
 import java.util.List;
 
@@ -28,7 +31,7 @@ public class BookingController {
 
     @PatchMapping("/{bookingId}")
     public BookingDtoResponse updateBooking(@RequestHeader(USER_ID) Long userId,
-                                           @PathVariable Long bookingId, @RequestParam("approved") Boolean approved) {
+                                            @PathVariable Long bookingId, @RequestParam("approved") Boolean approved) {
         return bookingService.updateBooking(bookingId, userId, approved);
     }
 
@@ -39,16 +42,20 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDtoResponse> getAllBookingForBooker(@RequestHeader(USER_ID) Long userId,
-                                                           @RequestParam(name = "state", defaultValue = "ALL") String state) {
-
-        return bookingService.getAllBookingByUserId(userId, state);
+                                                           @RequestParam(name = "state", defaultValue = "ALL") String state,
+                                                           @RequestParam(required = false) Integer from,
+                                                           @RequestParam(required = false) Integer size) {
+        Pageable pageable = PageableMaker.makePageable(from, size, Sort.by(Sort.Direction.DESC, "id"));
+        return bookingService.getAllBookingByUserId(userId, state, pageable);
     }
 
     @GetMapping("/owner")
     public List<BookingDtoResponse> getAllBookingForOwner(@RequestHeader(USER_ID) Long userId,
-                                                          @RequestParam(name = "state", defaultValue = "ALL") String state) {
-
-        return bookingService.getAllBookingByOwnerId(userId, state);
+                                                          @RequestParam(name = "state", defaultValue = "ALL") String state,
+                                                          @RequestParam(required = false) Integer from,
+                                                          @RequestParam(required = false) Integer size) {
+        Pageable pageable = PageableMaker.makePageable(from, size, Sort.by(Sort.Direction.DESC, "id"));
+        return bookingService.getAllBookingByOwnerId(userId, state, pageable);
     }
 
 }
