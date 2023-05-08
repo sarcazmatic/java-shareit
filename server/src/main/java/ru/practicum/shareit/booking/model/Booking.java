@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking.model;
 
+import jdk.jfr.Name;
 import lombok.*;
 import ru.practicum.shareit.booking.enums.BookingStatus;
 import ru.practicum.shareit.booking.enums.State;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "booking", schema = "public")
+@Table(name = "bookings", schema = "public")
 public class Booking {
 
     @Id
@@ -26,14 +27,15 @@ public class Booking {
     @Column(name = "end_date")
     private LocalDateTime end;
     @ManyToOne
-    @CollectionTable(name = "items", joinColumns = @JoinColumn(name = "item_id", nullable = false))
+    @CollectionTable(name = "booking_items", joinColumns = @JoinColumn(name = "item_id", nullable = false))
     private Item item;
     @ManyToOne
-    @CollectionTable(name = "users", joinColumns = @JoinColumn(name = "booker_id", nullable = false))
+    @CollectionTable(name = "booking_users", joinColumns = @JoinColumn(name = "booker_id", nullable = false))
     private User booker;
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
     @Enumerated(EnumType.STRING)
+    @Column(name = "state")
     private State state;
 
 }

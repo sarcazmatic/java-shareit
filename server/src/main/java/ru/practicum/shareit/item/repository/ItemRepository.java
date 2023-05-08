@@ -19,10 +19,10 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
     List<Item> findAllByOwnerId(Long ownerId, Pageable pageable);
 
-    List<Item> findAllByRequest_Id(Long requestId, Sort sort);
+    List<Item> findAllByRequestId(Long requestId, Sort sort);
 
     @Query("SELECT i FROM Item i WHERE i.available = true " +
-            " AND (LOWER(i.name) LIKE LOWER(CONCAT('%',:text,'%') ) " +
-            " OR LOWER(i.description) LIKE LOWER(CONCAT('%',:text,'%') ) )")
-    List<Item> searchItem(@Param("text") String text, Pageable pageable);
+            " AND (LOWER(i.name) LIKE (CONCAT('%',:text,'%')) " +
+            " OR LOWER(i.description) LIKE (CONCAT('%',:text,'%'))) ")
+    List<Item> searchForItemWithText(@Param("text") String text, Pageable pageable);
 }

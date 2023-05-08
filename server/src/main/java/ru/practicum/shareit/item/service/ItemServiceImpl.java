@@ -48,11 +48,11 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDtoWithBooking> getListItemByUserId(Long userId, Pageable pageable) {
-        Map<Item, List<Comment>> commentsMap = commentDbStorage.findAllByItem_IdIn(itemRepository.findAllIdByOwnerId(userId, pageable), Sort.by(Sort.Direction.DESC, "Created"))
+        Map<Item, List<Comment>> commentsMap = commentDbStorage.findAllByItemIdIn(itemRepository.findAllIdByOwnerId(userId, pageable), Sort.by(Sort.Direction.DESC, "Created"))
                 .stream()
                 .collect(Collectors.groupingBy(c -> c.getItem()));
 
-        Map<Item, List<Booking>> bookingsMap = bookingDbStorage.findAllByItem_IdInAndStatus(itemRepository.findAllIdByOwnerId(userId, pageable), BookingStatus.APPROVED, Sort.by(Sort.Direction.DESC, "Start"))
+        Map<Item, List<Booking>> bookingsMap = bookingDbStorage.findAllByItemIdInAndStatus(itemRepository.findAllIdByOwnerId(userId, pageable), BookingStatus.APPROVED, Sort.by(Sort.Direction.DESC, "Start"))
                 .stream()
                 .collect(Collectors.groupingBy(b -> b.getItem()));
 
@@ -73,14 +73,14 @@ public class ItemServiceImpl implements ItemService {
             LocalDateTime ldtNow = LocalDateTime.now();
             Booking lastBooking;
             Booking nextBooking;
-            Optional<Booking> lastBookingOpt = bookingDbStorage.findFirstByItem_IdAndEndBeforeAndStatusOrderByEndDesc(itemId, ldtNow, BookingStatus.APPROVED);
+            Optional<Booking> lastBookingOpt = bookingDbStorage.findFirstByItemIdAndEndBeforeAndStatusOrderByEndDesc(itemId, ldtNow, BookingStatus.APPROVED);
             if (lastBookingOpt.isEmpty()) {
-                lastBooking = bookingDbStorage.findFirstByItem_IdAndEndAfterAndStatusOrderByEndDesc(itemId, ldtNow, BookingStatus.APPROVED);
+                lastBooking = bookingDbStorage.findFirstByItemIdAndEndAfterAndStatusOrderByEndDesc(itemId, ldtNow, BookingStatus.APPROVED);
             } else {
                 lastBooking = lastBookingOpt.get();
             }
             Optional<Booking> nextBookingOpt = bookingDbStorage
-                    .findTopByItem_IdAndStartAfterAndStatusOrderByStartAsc(itemId, ldtNow, BookingStatus.APPROVED);
+                    .findTopByItemIdAndStartAfterAndStatusOrderByStartAsc(itemId, ldtNow, BookingStatus.APPROVED);
             if (nextBookingOpt.isEmpty()) {
                 nextBooking = null;
             } else {
@@ -141,8 +141,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDtoResponse> searchItem(String text, Pageable pageable) {
-
-        return itemRepository.searchItem(text, pageable)
+        String lowerText = text.toLowerCase();
+        return itemRepository.searchForItemWithText(lowerText, pageable)
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(toList());
@@ -184,7 +184,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     public List<Comment> getCommentsByItemId(Item item) {
-        return commentDbStorage.findByItem_IdOrderByCreatedDesc(item.getId());
+        return commentDbStorage.findByItemIdOrderByCreatedDesc(item.getId());
     }
 
     private static ItemDtoWithBooking addBookingsAndComments(Item item, List<Booking> bookings, List<Comment> comments) {

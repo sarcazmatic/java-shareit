@@ -50,7 +50,6 @@ public class BookingMapper {
 
     public Booking toBooking(User booker, Item item, BookingDtoRequest bookingDtoRequest) {
         Booking booking = new Booking();
-        //booking.setId(bookingDtoRequest.getId());
         booking.setStart(bookingDtoRequest.getStart());
         booking.setEnd(bookingDtoRequest.getEnd());
         booking.setBooker(booker);

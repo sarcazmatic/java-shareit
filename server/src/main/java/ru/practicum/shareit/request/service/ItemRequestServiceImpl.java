@@ -55,7 +55,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
                 .orElseThrow(() -> new NotFoundException(String.format("Пользователь с ID %s не найден", userId)));
 
         Map<Long, List<Item>> requestItemMap = extractItemsToRequests();
-        return itemRequestRepository.findAllByRequester_IdOrderByCreatedAsc(userId)
+        return itemRequestRepository.findAllByRequesterIdOrderByCreatedAsc(userId)
                 .stream()
                 .map(itemRequest
                         -> ItemRequestMapper.toItemRequestDtoResponse(itemRequest, requestItemMap.get(itemRequest.getId())))
@@ -69,7 +69,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
         ItemRequest itemRequest = itemRequestRepository.findById(itemRequestId)
                 .orElseThrow(() -> new NotFoundException(String.format("Запрос не существует!")));
-        List<Item> items = itemRepository.findAllByRequest_Id(itemRequest.getId(), Sort.by("id").descending());
+        List<Item> items = itemRepository.findAllByRequestId(itemRequest.getId(), Sort.by("id").descending());
 
         return ItemRequestMapper.toItemRequestDtoResponse(itemRequest, items);
     }
@@ -78,7 +78,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public List<ItemRequestDtoResponse> findAll(Long userId, int from, int size) {
         Pageable pageable = PageableMaker.makePageable(from, size, Sort.by("created").ascending());
         Map<Long, List<Item>> requestItemMap = extractItemsToRequests();
-        return itemRequestRepository.findByRequester_IdNot(userId, pageable)
+        return itemRequestRepository.findByRequesterIdNot(userId, pageable)
                 .stream()
                 .map(itemRequest
                         -> ItemRequestMapper.toItemRequestDtoResponse(itemRequest, requestItemMap.get(itemRequest.getId())))

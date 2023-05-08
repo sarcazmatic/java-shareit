@@ -21,10 +21,10 @@ public class CommentMapper {
         );
     }
 
-    public Comment toComment(CommentDtoRequest commentDtoRequest, Item item, User user, LocalDateTime ldt) {
+    public Comment toComment(CommentDtoRequest commentDtoRequest, Item item, User user, LocalDateTime created) {
         return Comment.builder()
                 .text(commentDtoRequest.getText())
-                .created(ldt)
+                .created(created)
                 .item(item)
                 .user(user)
                 .build();

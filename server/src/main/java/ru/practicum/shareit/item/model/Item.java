@@ -26,7 +26,7 @@ public class Item {
     private Boolean available;
 
     @ManyToOne
-    @CollectionTable(name = "users", joinColumns = @JoinColumn(name = "owner_id"))
+    @CollectionTable(name = "items_owners", joinColumns = @JoinColumn(name = "owner_id"))
     private User owner;
 
     @ManyToOne

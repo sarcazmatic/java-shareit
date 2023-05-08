@@ -29,8 +29,8 @@ public class Comment {
     private Item item;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "author_id", nullable = false) //нужно указать, какая колонка в текущей таблице будет вести на pk
+    private User user; //он тут знает, как называется pk
 
     @Column(name = "created")
     private LocalDateTime created;

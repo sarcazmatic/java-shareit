@@ -58,12 +58,13 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemDtoResponse> searchItem(@RequestParam String text,
+    public List<ItemDtoResponse> searchItem(@RequestParam (name = "text") String text,
                                             @RequestParam(required = false, defaultValue = "0") Integer from,
                                             @RequestParam(required = false, defaultValue = "10") Integer size) {
         if (text.isBlank()) {
             return Collections.emptyList();
         } else {
+            System.out.println(text);
             Pageable pageable = PageableMaker.makePageable(from, size, Sort.by(Sort.Direction.ASC, "id"));
             return itemService.searchItem(text, pageable);
         }
