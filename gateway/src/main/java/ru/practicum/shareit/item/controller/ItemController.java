@@ -12,9 +12,6 @@ import ru.practicum.shareit.item.dto.ItemDtoRequest;
 import ru.practicum.shareit.utility.Create;
 import ru.practicum.shareit.utility.Update;
 
-import javax.validation.ValidationException;
-
-
 @Controller
 @RequestMapping(path = "/items")
 @RequiredArgsConstructor
